@@ -1,0 +1,13 @@
+/* void expression as statement */
+
+void foo() {
+   printString("foo");
+   return;
+}
+
+int main() {
+  foo();
+  return 0 ;
+
+}
+
