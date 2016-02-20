@@ -113,34 +113,31 @@ sexp(int(I)) --> [-, IN], { integer(IN), I is -IN }, !.
 sexp(str(S)) --> [str(S)], !.
 sexp(app(Fun, Args)) --> [id(Fun), '('], !, exps(Args), [')'].
 sexp(var(V)) --> [id(V)], !.
+sexp(true) --> [true], !.
+sexp(false) --> [false], !.
 
-orexp(E) --> andexp(E).
-orexp(or(E1, E2)) --> andexp(E1), ['||'], !, orexp(E2).
+% logical
+:- op(600, xfy, '&&').
+:- op(600, xfy, '||').
+orexp(E) --> andexp(E1), (['||'], !, orexp(E2), { E = '||'(E1,E2)} ; { E = E1 }).
+andexp(E) --> lexp(E1), (['&&'], !, andexp(E2), { E = '&&'(E1,E2) } ; { E = E1 }).
 
-andexp(E) --> lexp(E).
-andexp(and(E1, E2)) --> lexp(E1), ['&&'], !, andexp(E2).
 
 % comp
-lexp(true) --> [true], !.
-lexp(false) --> [false], !.
+:- op(600, xfy, '!=').
+:- op(600, xfy, '<=').
+:- op(600, xfy, '>=').
 
 lexp(E) --> aexp(E).
 lexp(not(E)) --> [!], !, lexp(E).
-lexp(<(E1,E2)) --> aexp(E1), [<], !, aexp(E2).
-lexp(>(E1,E2)) --> aexp(E1), [>], !, aexp(E2).
-lexp(=<(E1,E2)) --> aexp(E1), ['<='], !, aexp(E2).
-lexp(>=(E1,E2)) --> aexp(E1), ['>='], !, aexp(E2).
-lexp(==(E1,E2)) --> aexp(E1), [==], !, aexp(E2).
-lexp(\=(E1,E2)) --> aexp(E1), ['!='], !, aexp(E2).
 
+
+lexp(E) --> aexp(E1), [Op], { member(Op, [<,>,'<=','>=',==,'!=']) }, !, aexp(E2), { E =.. [Op, E1, E2] }.
 
 % additive
 aexp(E) --> mexp(E).
-aexp(+(E1, E2)) --> mexp(E1), [+], !, aexp(E2).
-aexp(-(E1, E2)) --> mexp(E1), [-], !, aexp(E2).
+aexp(E) --> mexp(E1), [Op], { member(Op, [+,-]) }, !, aexp(E2), { E =.. [Op, E1, E2] }.
 
 % multiplicative
 mexp(E) --> sexp(E).
-mexp(*(E1, E2)) --> sexp(E1), [*], !, mexp(E2).
-mexp(*(E1, E2)) --> sexp(E1), [/], !, mexp(E2).
-mexp('%'(E1, E2)) --> sexp(E1), ['%'], !, mexp(E2).
+mexp(E) --> sexp(E1), [Op], { member(Op, [*,/,'%']) }, !, mexp(E2), { E =.. [Op, E1, E2] }.
