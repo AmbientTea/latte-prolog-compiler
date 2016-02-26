@@ -1,12 +1,19 @@
-:- module(parser, [parse/2, tokenize//1]).
+:- module(parser, [parse/3, tokenize//1]).
 :- use_module(library(dcg/basics)).
+
+parse( Type, File, Query ) :-
+	phrase_from_file(tokenize(Tokens), File),
+	Query =.. [Type, _],
+	phrase(Query, Tokens),
+	!.
+
+%%%%%%%%%%%%%
+%%% LEXER %%%
+%%%%%%%%%%%%%
 
 keywords([ if, else, while, return, true, false, int, string, boolean, void]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
             "=", "<=", "<", ">=", ">", "||", "&&", "!", ","]).
-
-%op(600, xfy, !=).
-%op(600, xfy, !=).
 
 id(Id) --> [Start], { code_type(Start, alpha) }, id_cont(Cont), { atom_codes(Id, [Start | Cont]) }.
 id_cont([H|T]) --> [H], { code_type(H, alnum) }, id_cont(T).
@@ -30,32 +37,27 @@ tokenize(X) --> blank, !, tokenize(X).
 tokenize([Tok | Tail]) --> token(Tok), !, tokenize(Tail).
 tokenize([]) --> [], !.
 
-%tokenize(_), X --> { writeln(error), writeln(X), format("error at: ~s~n", [X]), fail }.
-
-
 comment1end --> "*/", !.
 comment1end --> [_], comment1end.
 
 comment2end --> "\n", !.
 comment2end --> [_], comment2end.
 
+%%%%%%%%%%%%%%
+%%% PARSER %%%
+%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%
+%%% PROGRAM %%%
+%%%%%%%%%%%%%%%
 
-parse( File, Tree ) :-
-	phrase_from_file(tokenize(Tokens), File),
-	writeln(Tokens),
-	( phrase(program(Tree), Tokens) ),
-	writeln(Tree),
-	!.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 program([Def|Defs]) --> topdef(Def), !, program(Defs).
 program([]) --> [].
 
 topdef(topdef(Type, Id, Args, Block)) --> type(Type), [id(Id), '('], args(Args), [')'], block(Block).
 
 
-farg(arg(Type, Id)) --> type(Type), !, [id(Id)].
+farg(arg(Id, Type)) --> type(Type), !, [id(Id)].
 args([H|T]) --> farg(H), [,], !, args(T).
 args([H]) --> farg(H).
 args([]) --> [], !.
@@ -68,12 +70,14 @@ inits([H|T]) --> init(H), [,], !, inits(T).
 inits([H]) --> init(H).
 inits([]) --> [].
 
+%%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
+%%%%%%%%%%%%%%%%%%
 
 block( Stmts ) --> ['{'], !, stmts(Stmts), ['}'], !.
 
-init((Id, Exp)) --> [id(Id), =], !, exp(Exp).
-init(Id) --> [id(Id)].
+init(init(Id, Exp)) --> [id(Id), =], !, exp(Exp).
+init(noinit(Id)) --> [id(Id)].
 
 stmt( decl(Type, Ins) ) --> type(Type), inits(Ins), [;].
 
@@ -98,7 +102,10 @@ stmt(expstmt(Exp)) --> exp(Exp), [;].
 types([void, int, boolean, string]).
 type(T) --> { types(Tps), member(T, Tps) }, [T].
 
-% expressions
+%%%%%%%%%%%%%%%%%%%
+%%% expressions %%%
+%%%%%%%%%%%%%%%%%%%
+
 exps([H|T]) --> exp(H), [,], exps(T).
 exps([E]) --> exp(E).
 exps([]) --> [].
