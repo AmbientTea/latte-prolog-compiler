@@ -79,6 +79,8 @@ block( Stmts ) --> ['{'], !, stmts(Stmts), ['}'], !.
 init(init(Id, Exp)) --> [id(Id), =], !, exp(Exp).
 init(noinit(Id)) --> [id(Id)].
 
+stmt( skip ) --> [;], !.
+
 stmt( decl(Type, Ins) ) --> type(Type), inits(Ins), [;].
 
 stmt( =(Id, Exp) ) --> [id(Id), =], exp(Exp), [;].
@@ -139,12 +141,10 @@ lexp(E) --> aexp(E).
 lexp(not(E)) --> [!], !, lexp(E).
 
 
-lexp(E) --> aexp(E1), [Op], { member(Op, [<,>,'<=','>=',==,'!=']) }, !, aexp(E2), { E =.. [Op, E1, E2] }.
+lexp(E) --> aexp(E1), [Op], { member(Op, [<,>,'<=','>=',==,'!=']) }, !, lexp(E2), { E =.. [Op, E1, E2] }.
 
 % additive
-aexp(E) --> mexp(E).
-aexp(E) --> mexp(E1), [Op], { member(Op, [+,-]) }, !, aexp(E2), { E =.. [Op, E1, E2] }.
+aexp(E) --> mexp(E1), ([Op], { member(Op, [+,-]) }, !, aexp(E2), { E =.. [Op, E1, E2] } ; {E = E1}).
 
 % multiplicative
-mexp(E) --> sexp(E).
-mexp(E) --> sexp(E1), [Op], { member(Op, [*,/,'%']) }, !, mexp(E2), { E =.. [Op, E1, E2] }.
+mexp(E) --> sexp(E1), ( [Op], { member(Op, [*,/,'%']) }, !, mexp(E2), { E =.. [Op, E1, E2] } ; {E = E1}).
