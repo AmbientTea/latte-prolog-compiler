@@ -23,6 +23,7 @@ declare_args(Env, [arg(Id,Type)|T], NEnv) :-
     ; fail("argument ~w declared multiple times", [Id]).
 
 correct_function(Env0, topdef(Return, Fun, Args, Body)) :- 
-    writeln(checking: Fun : Args),
+    % writeln(checking: Fun : Args),
     declare_args(Env0.push(), Args, Env1),
-    correct(Env1.put(return, Return).push(), block(Body), _).
+    correct(Env1.put(return, Return).push(), block(Body), EEnv),
+    ((EEnv.returned = false, Return \= void) -> fail("control flow reaches function ~w end without return", [Fun]) ; true).

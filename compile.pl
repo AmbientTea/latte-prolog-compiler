@@ -1,4 +1,4 @@
-#!/usr/bin/prolog
+#!/usr/bin/prolog -q
 
 :- use_module(library(optparse)).
 
@@ -29,13 +29,11 @@
 	current_prolog_flag(argv, LineArgs),
 	opt_parse(OptSpec, LineArgs, Opts, Args),
 	member(content(Cont), Opts),
-	% member(content(Env), Opts),
-	(Args = [File | _] -> true ; fail("no file specified")),
+	
+	(Args = [File | _]       -> true ; fail("no file specified")),
 	(parse(Cont, File, Tree) -> true ; fail("parsing failed") ),
-	writeln(checking),
-	(check(Tree) -> true ; fail("type check failed")),
+	(check(Tree)            /* -> true ; fail("type check failed")*/),
+	
 	halt(0)
-) ; halt.
-
-:- halt(-1).
+) ; halt(-1).
 
