@@ -22,7 +22,7 @@ id_cont([]) --> "".
 keyword(K) :- keywords(Keys), member(K, Keys).
 operator(O) :- operators(Ops), member(O, Ops).
 
-token(str(T)) --> "\""	, string(S), "\"", !, {atom_codes(T, S)}.
+token(str(T)) --> "\""	, string(S), "\"", !, {string_chars(T, S)}.
 token(T) --> {operator(Tok)}, Tok, !, {atom_codes(T, Tok)}.
 token(T) --> integer(T), !.
 token(T) --> id(Id), { keywords(KS), (member(Id, KS) -> T = Id ; T = id(Id))}.

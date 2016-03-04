@@ -2,10 +2,8 @@
 
 echo ==========good============
 for file in `ls good/*.lat`; do
-	echo -n $file ...
-	./compile.pl $file
-	# $file.out > a 
-	# diff a good/`basename $file .lat`.output
+    out=good/`basename $file .lat`.output
+	echo $file ... `./compile.pl $file | diff -q - $out`
 done;
 
 echo ==========bad=============

@@ -5,6 +5,7 @@
 :- use_module(utils).
 :- use_module(parser).
 :- use_module(frontend).
+:- use_module(eval).
 
 :- % main
 (
@@ -32,8 +33,10 @@
 	
 	(Args = [File | _]       -> true ; fail("no file specified")),
 	(parse(Cont, File, Tree) -> true ; fail("parsing failed") ),
-	(check(Tree)            /* -> true ; fail("type check failed")*/),
-	
+	(check(Tree)             /*-> true ; fail("type check failed")*/),
+	( Cont = exp -> eval_exp(Tree)
+	; Cont = stmt -> eval_stmt(Tree)
+	; Cont = program -> eval_program(Tree) ),
 	halt(0)
 ) ; halt(-1).
 
