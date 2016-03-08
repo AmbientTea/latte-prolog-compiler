@@ -1,12 +1,12 @@
-:- module(program, [correct_program/1]).
+:- module(program, [correct_program/2]).
 :- use_module(utils).
 :- use_module(environment).
 :- use_module(statement).
 
 arg_types([], []).
-arg_types([arg(_, Tp) | T], [Tp | TT]) :- arg_types(T, TT).
+arg_types([(_, Tp) | T], [Tp | TT]) :- arg_types(T, TT).
 
-correct_program(Program) :- 
+correct_program(Program, Env) :- 
     emptyenv(EEnv),
     foldr(declare_fun, EEnv, Program, Env),
     maplist(correct_function(Env), Program).
@@ -18,7 +18,7 @@ declare_fun(Env, topdef(Return, Fun, Args, _), NEnv) :-
 %%%%%
 
 declare_args(Env, [], Env).
-declare_args(Env, [arg(Id,Type)|T], NEnv) :-
+declare_args(Env, [(Id,Type)|T], NEnv) :-
     can_shadow(Env, Id) -> (NEnv0 = Env.add_var(Id,Type), declare_args(NEnv0, T, NEnv) )
     ; fail("argument ~w declared multiple times", [Id]).
 

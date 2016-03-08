@@ -122,7 +122,7 @@ M.eval_stmt(expstmt(Exp)) := M :- !, _ = M.eval_exp(Exp).
 %%%%%%%%%%%%%%%
 
 arg_names([], []).
-arg_names([arg(Nm, _) | T], [Nm | TT]) :- arg_names(T, TT).
+arg_names([(Nm, _) | T], [Nm | TT]) :- arg_names(T, TT).
 
 M.load_program([]) := M.
 M.load_program([topdef(_Ret, Fun, Args, Body) | Tail]) :=

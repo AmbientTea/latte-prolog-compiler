@@ -1,7 +1,8 @@
-:- module(eval_state, [new_eval_state/1]).
+:- module(eval_state, [new_eval_state/2]).
 
-new_eval_state(eval_state{
-    vars : [_{}]
+new_eval_state(Funs, eval_state{
+    vars : [_{}],
+    funs: Funs
 }).
 
 

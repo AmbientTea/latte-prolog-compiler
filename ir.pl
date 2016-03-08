@@ -1,6 +1,33 @@
-:- module(ir, [ir_exp//3, ir_stmt//3, ir_program//1]).
+:- module(ir, [ir_exp//3, ir_stmt//3, ir_program/2]).
 
 :- use_module(eval_state).
+
+
+merge_env(Env1, Env2, Br1, Br2, NewEnv) -->
+    { Env1.vars = [Top1|_], Env2.vars = [Top2|_] } -> (
+        merge_env_level(Top1, Top2, Br1, Br2, NewTop),
+        merge_env(Env1.pop(), Env2.pop(), Br1, Br2, NewEnv1),
+        { NewEnv = NewEnv1.put(vars, [NewTop | NewEnv1.vars]) }
+    ) ; [], { Env1 = NewEnv }.
+
+
+merge_env_level(Env1, Env2, Br1, Br2, NewEnv) -->
+    { V1 = Env1.get(K), V2 = Env2.get(K) } -> (
+        { del_dict(K, Env1, _, NEnv1), del_dict(K, Env2, _, NEnv2) },
+        merge_env_level(NEnv1, NEnv2, Br1, Br2, NewEnv1),
+        ( { V1 == V2 } ->
+            [], { NewEnv = NewEnv1.put(K, V1) }
+            ;
+            [ V3 = phi([V1, Br1], [V2, Br2]) ],
+            { NewEnv = NewEnv1.put(K, V3) }
+        )
+    ) ; [], { NewEnv = _{} }.
+    
+    
+    
+
+
+%%% EXPRESSIONS %%%
 
 ir_exps(_, [], []) --> [].
 ir_exps(Env, [H|T], [HV|TV]) -->
@@ -40,7 +67,7 @@ ir_exp(Env, '||'(E1,E2), V) -->
     [ block(End),
       V = phi([(1, True), (0, False)]) ].
 
-
+%%% STATEMENTS %%%
 
 ir_stmts(Env, [], Env) --> [].
 ir_stmts(Env, [H|T], NewEnv) -->
@@ -56,6 +83,9 @@ ir_stmt(Env, Id = Exp, NewEnv) -->
     ir_exp(Env, Exp, V),
     { NewEnv = Env.set_var(Id, V) }.
 
+ir_stmt(Env, incr(Id), NewEnv ) --> ir_stmt(Env, Id = Id + 1, NewEnv).
+ir_stmt(Env, decr(Id), NewEnv ) --> ir_stmt(Env, Id = Id - 1, NewEnv).
+
 ir_stmt(Env, decl(_, []), Env) --> [].
 ir_stmt(Env, decl(_, [ noinit(Id) | T ]), NewEnv) -->
     ir_stmt(Env.add_var(Id,_), decl(_,T), NewEnv).
@@ -66,14 +96,35 @@ ir_stmt(Env, decl(_, [ init(Id, Exp) | T ]), NewEnv) -->
 ir_stmt(Env, expstmt(Exp), Env) -->
     ir_exp(Env, Exp, _).
 
+ir_stmt(Env, if(If, Then, Else), NewEnv ) -->
+    ir_exp(Env, If, IfV),
+    [ if(IfV, ThenBlock, ElseBlock) ],
+    
+    [ block(ThenBlock) ],
+    ir_stmt(Env.push(), Then, ThenEnv),
+    [ jmp(EndBlock) ],
+    
+    [ block(ElseBlock) ],
+    ir_stmt(Env.push(), Else, ElseEnv),
+    [ jmp(EndBlock) ],
+    
+    [ block(EndBlock) ],
+    merge_env(ThenEnv.pop(), ElseEnv.pop(), ThenBlock, ElseBlock, NewEnv).
+    
+    
 
 
-ir_fun(topdef(Ret, Fun, Args, Body)) -->
-    { new_eval_state(St) },
-    [ fun(Ret, Fun, Args) ],
-    ir_stmt(St, block(Body), _),
-    [ endfun ].
+%%% PROGRAM %%%
 
+ir_args(St, [], [], St).
+ir_args(St, [(Id, Type) | T], [(Var, Id, Type) | TT], NSt) :-
+    ir_args(St.add_var(Id, Var), T, TT, NSt).
+    
 
-ir_program([]) --> [].
-ir_program([H|T]) --> ir_fun(H), ir_program(T).
+ir_fun(topdef(Ret, Fun, Args, Body), fun(Ret, Fun, FArgs, Code)) :-
+    new_eval_state(_, St),
+    ir_args(St.push(), Args, FArgs, FSt),
+    phrase(ir_stmt(FSt, block(Body), _), Code)
+.
+
+ir_program(Prog, Code) :- maplist(ir_fun, Prog, Code).

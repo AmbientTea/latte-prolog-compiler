@@ -57,7 +57,7 @@ program([]) --> [].
 topdef(topdef(Type, Id, Args, Block)) --> type(Type), [id(Id), '('], args(Args), [')'], block(Block).
 
 
-farg(arg(Id, Type)) --> type(Type), !, [id(Id)].
+farg((Id, Type)) --> type(Type), !, [id(Id)].
 args([H|T]) --> farg(H), [,], !, args(T).
 args([H]) --> farg(H).
 args([]) --> [], !.
