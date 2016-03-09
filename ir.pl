@@ -100,6 +100,11 @@ ir_stmt(Env, decl(_, [ init(Id, Exp) | T ]), NewEnv) -->
 ir_stmt(Env, expstmt(Exp), Env) -->
     ir_exp(Env, Exp, _).
 
+ir_stmt(Env, return, Env) --> [ret].
+ir_stmt(Env, return(Exp), Env) -->
+    ir_exp(Env, Exp, V),
+    [ret(Env.ret_type,V)].
+
 ir_stmt(Env, if(If, Then, Else), NewEnv ) -->
     ir_exp(Env, If, IfV),
     [ if(IfV, ThenBlock, ElseBlock) ],
@@ -128,7 +133,8 @@ ir_args(St, [(Id, Type) | T], [(Var, Type) | TT], NSt) :-
 ir_fun(Env, topdef(Ret, Fun, Args, Body), fun(Ret, Fun, FArgs, Code)) :-
     new_eval_state(Env, St),
     ir_args(St.push(), Args, FArgs, FSt),
-    phrase(ir_stmt(FSt, block(Body), _), Code)
+    phrase(ir_stmt(FSt.put(ret_type, Ret), block(Body), _), Code1),
+    (Env.functions.Fun.return = void -> append(Code1, [ret], Code) ; Code = Code1)
 .
 
 ir_program(Env, Prog, Code) :- maplist(ir_fun(Env), Prog, Code).

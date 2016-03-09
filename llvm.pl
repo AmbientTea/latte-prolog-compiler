@@ -82,7 +82,8 @@ llvm_stmt(if(Cond, Lab1, Lab2)) -->
 
 llvm_stmt(jmp(Lab)) --> "br label %", atom(Lab).
 
-
+llvm_stmt(ret) --> "ret void".
+llvm_stmt(ret(Type, V)) --> "ret ", llvm_type(Type), " ", atom(V).
 
 llvm_stmt(_) --> [].
 
