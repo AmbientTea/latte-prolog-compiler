@@ -50,7 +50,7 @@
 	    ; Cont = stmt -> eval_stmt(Tree)
 	    ; Cont = program -> eval_program(Tree) )
     ; Mode = compile ->
-        ( compile(llvm, Tree, Code),
+        ( compile(Env, Tree, Code),
             writeln(Code)
         ; fail("compilation not implemented yet"))
     ; fail("invalid mode: ~w", [Mode])),

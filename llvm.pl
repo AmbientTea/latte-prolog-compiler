@@ -1,29 +1,56 @@
 :- module(llvm, [llvm_compile/2]).
 
 :- use_module(library(dcg/basics)).
+:- use_module(library(apply)).
 
+% top level llvm translation
+llvm_compile(In, Out) :-
+    llvm_inst(In),
+    phrase(llvm_compile(In), Out).
+
+%%% instantiation %%%
+
+llvm_inst(Prog) :- maplist(llvm_inst_fun, Prog).
+
+llvm_inst_fun(fun(_, _, Args, Body)) :-
+    foldl(llvm_inst_arg, Args, 1, _),
+    foldl(llvm_inst_instr, Body, 1, _).
+
+llvm_inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
+
+llvm_inst_instr(V = _, C, C1) :- atomic_concat('%', C, V), C1 is C + 1.
+llvm_inst_instr(block(Bl), C, C1) :- atomic_concat('label', C, Bl), C1 is C + 1.
+llvm_inst_instr(_, C, C).
+
+%%%%%%%%%%%%%%%%%%%
+%%% translation %%%
+%%%%%%%%%%%%%%%%%%%
+llvm_compile([]) --> [].
+llvm_compile([H|T]) --> llvm_fun(H), llvm_compile(T).
+
+
+% types
 llvm_type(int) --> "i32".
 llvm_type(boolean) --> "i1".
 llvm_type(void) --> "void".
 llvm_type(string) --> "i8*".
 
+% arguments
 llvm_args([]) --> [].
-llvm_args([(Var,_Id,Type) | T]) -->
-    llvm_type(Type), " %", atom(Var),
+llvm_args([(Var,Type) | T]) -->
+    llvm_type(Type), " ", atom(Var),
     ( { T = [] } -> [] ; ", ", llvm_argS(T)).
 
+% operator info
 llvm_op(+, "add", "i32", "i32").
 llvm_op(-, "sub", "i32", "i32").
 llvm_op(*, "mul", "i32", "i32").
 llvm_op(/, "div", "i32", "i32").
 
-llvm_op(>, "icmp ge", "i32", "i1").
+llvm_op(>, "icmp sgt", "i32", "i1").
 
-llvm_compile(In, Out) :- phrase(llvm_compile(In), Out).
 
-llvm_compile([]) --> [].
-llvm_compile([H|T]) --> llvm_fun(H), llvm_compile(T).
-
+% functions
 llvm_fun(fun(Type, Fun, Args, Body)) -->
     "define ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), "){",
     llvm_stmts(Body),
@@ -33,15 +60,18 @@ llvm_fun(fun(Type, Fun, Args, Body)) -->
 indent(block(_)) --> "".
 indent(_) --> "    ".
 llvm_stmts([]) --> [].
-llvm_stmts([H|T]) --> "\n", indent(H), llvm_stmt(H), !, llvm_stmts(T).
+llvm_stmts([H|T]) --> "\n", indent(H), /* atom(H), " ----> ", */ llvm_stmt(H), !, llvm_stmts(T).
 
 
-llvm_stmt(S) --> { writeln(left:S), fail }.
+% statements
+% llvm_stmt(S) --> { writeln(left:S), fail }.
 
 llvm_stmt(block(B)) --> atom(B), ":".
 
-llvm_stmt(V = call(Fun, Args)) -->
-    atom(V), " = call ", /* type */ "@", atom(Fun), "(", llvm_args(Args), ")".
+llvm_stmt(V = call(Type, Fun, Args)) -->
+    atom(V), " = call ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), ")".
+llvm_stmt(call(Fun, Args)) -->
+    "call ", llvm_type(void), " @", atom(Fun), "(", llvm_args(Args), ")".
 
 llvm_stmt(V = OpE) -->
     { OpE =.. [Op, V1, V2], llvm_op(Op, LLOp, InT, _) },

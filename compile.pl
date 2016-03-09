@@ -6,17 +6,22 @@
 :- use_module(llvm).
 :- use_module(peephole).
 
-compile(llvm, exp(Exp), Out) :-
+compile(_, exp(Exp), Out) :-
     phrase(ir_exp(_, Exp, _), Out).
 
-compile(llvm, stmt(Stmt), Out)  :-
-    new_eval_state(St, _),
+compile(Env, stmt(Stmt), Out)  :-
+    new_eval_state(Env, St),
     phrase(ir_stmt(St, Stmt, _), Out).
 
-compile(llvm, program(Prog), Out) :-
-    ir_program(Prog, IR),
-    writeln(IR),
+compile(Env, program(Prog), Out) :-
+    ir_program(Env,Prog, IR),
+    % writeln(IR),
     optimize(IR, OpIR),
+    /*
+    writeln(OpIR), writeln("\n\n\n"),
+    term_variables(OpIR, Vars), writeln(xXX:Vars),
+    maplist(random_between(1,99), Vars),
+    */
     llvm_compile(OpIR, Out1),
     string_chars(Out, Out1).
 
@@ -24,8 +29,10 @@ compile(llvm, program(Prog), Out) :-
 %%%%%%%%%%%5
 
 optimize(X,X).
+/*
 optimize([], []).
 optimize( [fun(Type,Fun,Args,Body) | T],
           [fun(Type,Fun,Args,OptBody) | OptT] ) :-
     phrase(peephole(Body), OptBody),
     optimize(T, OptT).
+*/

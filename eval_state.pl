@@ -1,8 +1,8 @@
 :- module(eval_state, [new_eval_state/2]).
 
-new_eval_state(Funs, eval_state{
+new_eval_state(Env, eval_state{
     vars : [_{}],
-    funs: Funs
+    env: Env
 }).
 
 
