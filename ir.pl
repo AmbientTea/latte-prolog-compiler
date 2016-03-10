@@ -19,7 +19,7 @@ merge_env_level(Env1, Env2, Br1, Br2, NewEnv) -->
         ( { V1 == V2 } ->
             [], { NewEnv = NewEnv1.put(K, V1) }
             ;
-            [ V3 = phi([V1, Br1], [V2, Br2]) ],
+            [ V3 = phi(_Type, [(V1, Br1), (V2, Br2)]) ],
             { NewEnv = NewEnv1.put(K, V3) }
         )
     ) ; [], { NewEnv = _{} }.
