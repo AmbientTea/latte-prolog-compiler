@@ -32,10 +32,10 @@ llvm_compile([H|T]) --> llvm_fun(H), llvm_compile(T).
 
 
 % types
+llvm_type(string) --> "i8*".
 llvm_type(int) --> "i32".
 llvm_type(boolean) --> "i1".
 llvm_type(void) --> "void".
-llvm_type(string) --> "i8*".
 
 % arguments
 llvm_args([]) --> [].
@@ -68,7 +68,7 @@ llvm_stmts([H|T]) --> "\n", indent(H), /* atom(H), " ----> ", */ llvm_stmt(H), !
 % statements
 llvm_phi_args([]) --> [].
 llvm_phi_args([(V,Lab) | T]) -->
-    "[", atom(V), ", %", atom(Lab), "]", ({ T = []} -> [] ; ", ", llvm_phi_args(T)).
+    "[", atom(V.reg), ", %", atom(Lab), "]", ({ T = []} -> [] ; ", ", llvm_phi_args(T)).
 
 % llvm_stmt(S) --> { writeln(left:S), fail }.
 
