@@ -15,4 +15,4 @@ check(stmt(Stmt), Env) :-
     emptyenv(Env),
     stmt_monad(..., Env, void, M),
     _ = M.epush().correct(Stmt).
-check(exp(Exp), Env) :- emptyenv(Env), types(Env, Exp, Type), writeln(type: Type).
+check(exp(Exp), Env) :- emptyenv(Env), types(Env, Exp, Type, _), writeln(type: Type).
