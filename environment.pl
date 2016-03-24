@@ -3,15 +3,15 @@
 emptyenv( environment{
     return : void,
     functions : functions{
-        printInt : fun{ return: void, args: [int] },
-        printString : fun{ return: void, args: [string] }
+        printInt : fun{ return: void, args: [int], extern: true },
+        printString : fun{ return: void, args: [string], extern: true }
     },
     stack : [],
     returned : false
 }).
 
 M.add_fun(Fun, Type, ArgTypes) := M.put(functions, M.functions.put(Fun,FunInfo)) :-
-    FunInfo = fun{ return: Type, args: ArgTypes }.
+    FunInfo = fun{ return: Type, args: ArgTypes, extern: false }.
 
 M.push() := M.put(stack, [vars{} | M.stack]).
 M.pop() := M.put(stack, Stack) :- M.stack = [_ | Stack].

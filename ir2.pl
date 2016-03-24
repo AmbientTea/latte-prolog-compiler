@@ -98,7 +98,10 @@ ir_exp(Env, true, 1, Env) --> !, [].
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
     ir_exps(Env, ArgExps, ArgVals, NewEnv),
     { zip(ArgVals, Env.funs.Fun.args, Args) },
-    [ V = call(Env.funs.Fun.return, Fun, Args) ].
+    {Type = Env.funs.Fun.return},
+    ({Type = void} ->
+      [ call(Fun, Args) ]
+    ; [ V = call(Type, Fun, Args) ]).
 
 ir_exp(Env, E, V, NewEnv) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=','==']), VV =.. [Op, V1, V2] }, !,
@@ -245,14 +248,19 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
     },
     [ function(Ret, Fun, NArgs, Code) ].
 
+ir_funs(_, []) --> [].
+ir_funs(Env, [H|T]) --> ir_fun(Env, H), !, ir_funs(Env, T).
+
+ir_fun_decls(_{}) --> [].
+ir_fun_decls(Decls) -->
+    { Fun = Decls.get(Key), del_dict(Key, Decls, Fun, Decls2) },
+    ({ Fun.extern = false } ; [ decl(Key, Fun.return, Fun.args) ]),
+    ir_fun_decls(Decls2).
 
 
-
-program(_, []) --> [].
-program(Env, [H|T]) --> ir_fun(Env, H), !, program(Env, T).
-
-
-
+program(Env, Program) -->
+    ir_fun_decls(Env.functions),
+    ir_funs(Env, Program).
 
 
 ir_program(Env, Program, IR) :-

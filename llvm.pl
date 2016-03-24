@@ -15,6 +15,7 @@ llvm_inst(Prog) :- maplist(llvm_inst_fun, Prog).
 llvm_inst_fun(function(_, _, Args, Body)) :-
     foldl(llvm_inst_arg, Args, 1, _),
     foldl(llvm_inst_instr, Body, (1,1), _).
+llvm_inst_fun(_).
 
 llvm_inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
@@ -38,6 +39,10 @@ llvm_type(string) --> "i8*".
 llvm_type(boolean) --> "i1".
 llvm_type(void) --> "void".
 
+llvm_types([]) --> [].
+llvm_types([T]) --> llvm_type(T).
+llvm_types([H|T]) --> llvm_type(H), llvm_types(T).
+
 % arguments
 llvm_args([]) --> [].
 llvm_args([(Var,Type) | T]) -->
@@ -60,7 +65,8 @@ llvm_fun(function(Type, Fun, Args, Body)) -->
     "define ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), "){",
     llvm_stmts(Body),
     "\n}". 
-
+llvm_fun(decl(Fun, Type, Args)) -->
+    "declare ", llvm_type(Type), " @", atom(Fun), "(", llvm_types(Args), ")\n".
 
 indent(block(_)) --> "".
 indent(_) --> "    ".
