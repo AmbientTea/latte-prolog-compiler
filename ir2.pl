@@ -97,7 +97,8 @@ ir_exp(Env, true, 1, Env) --> !, [].
 
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
     ir_exps(Env, ArgExps, ArgVals, NewEnv),
-    [ V = app(Env.funs.Fun.ret, Fun, ArgVals) ].
+    { zip(ArgVals, Env.funs.Fun.args, Args) },
+    [ V = call(Env.funs.Fun.return, Fun, Args) ].
 
 ir_exp(Env, E, V, NewEnv) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=','==']), VV =.. [Op, V1, V2] }, !,
