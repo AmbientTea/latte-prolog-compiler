@@ -1,0 +1,17 @@
+declare i32 @puts(i8*)
+declare i8* @itostr(i32)
+
+@.str = private constant [5 x i8] c"Hello", align 1
+
+define void @printString( i8* %i ) {
+begin:
+	call i32 @puts(	i8* %i )
+	ret void
+}
+
+define void @printInt( i32 %i ){
+begin:
+	%0 = call i8* @itostr( i32 %i )
+	call i32 @puts( i8* %0 )
+	ret void
+}
