@@ -19,3 +19,10 @@ foldr(Fun, Zero, [H | Args], Ret) :-
 zip([], _, []).
 zip(_, [], []).
 zip([H1|T1], [H2|T2], [(H1,H2)|T]) :- zip(T1, T2, T).
+
+dict_minus(Dict, _{}, Dict) :- !.
+dict_minus(Dict, MinDict, NewDict) :-
+    _ = MinDict.get(El),
+    ( del_dict(El, Dict, _, Dict2), ! ; Dict2 = Dict ),
+    del_dict(El, MinDict, _, MinDict2), !,
+    dict_minus(Dict2, MinDict2, NewDict).

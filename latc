@@ -1,0 +1,13 @@
+#!/bin/bash
+
+IN=$1
+if [ "$2" != "" ]; then
+    OUT=$2;
+else
+    OUT=`dirname $IN`/`basename $IN .lat`.out
+fi;
+
+echo $OUT
+
+./latc.pl -m compile $IN | llvm-as | llvm-link - -o $OUT &&
+chmod +x $OUT

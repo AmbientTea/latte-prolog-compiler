@@ -12,7 +12,7 @@ llvm_compile(In, Out) :-
 
 llvm_inst(Prog) :- maplist(llvm_inst_fun, Prog).
 
-llvm_inst_fun(fun(_, _, Args, Body)) :-
+llvm_inst_fun(function(_, _, Args, Body)) :-
     foldl(llvm_inst_arg, Args, 1, _),
     foldl(llvm_inst_instr, Body, (1,1), _).
 
@@ -22,6 +22,7 @@ llvm_inst_instr(V = _, (C,LC), (C1,LC)) :- atomic_concat('%', C, V), C1 is C + 1
 llvm_inst_instr(block(Bl), (C,LC), (C,LC1)) :-
     atomic_concat('label', LC, Bl),
     LC1 is LC + 1.
+% llvm_inst_instr(ret(int,_), X, X).
 llvm_inst_instr(_, C, C).
 
 %%%%%%%%%%%%%%%%%%%
@@ -32,8 +33,8 @@ llvm_compile([H|T]) --> llvm_fun(H), llvm_compile(T).
 
 
 % types
-llvm_type(string) --> "i8*".
 llvm_type(int) --> "i32".
+llvm_type(string) --> "i8*".
 llvm_type(boolean) --> "i1".
 llvm_type(void) --> "void".
 
@@ -50,10 +51,12 @@ llvm_op(*, "mul", "i32", "i32").
 llvm_op(/, "div", "i32", "i32").
 
 llvm_op(>, "icmp sgt", "i32", "i1").
+llvm_op(<, "icmp slt", "i32", "i1").
+llvm_op('==', "icmp eq", "i32", "i1").
 
 
 % functions
-llvm_fun(fun(Type, Fun, Args, Body)) -->
+llvm_fun(function(Type, Fun, Args, Body)) -->
     "define ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), "){",
     llvm_stmts(Body),
     "\n}". 
@@ -68,9 +71,10 @@ llvm_stmts([H|T]) --> "\n", indent(H), /* atom(H), " ----> ", */ llvm_stmt(H), !
 % statements
 llvm_phi_args([]) --> [].
 llvm_phi_args([(V,Lab) | T]) -->
-    "[", atom(V.reg), ", %", atom(Lab), "]", ({ T = []} -> [] ; ", ", llvm_phi_args(T)).
+    "[", atom(V), ", %", atom(Lab), "]", ({ T = []} -> [] ; ", ", llvm_phi_args(T)).
 
-% llvm_stmt(S) --> { writeln(left:S), fail }.
+
+%llvm_stmt(S) --> ". ", atom(S).
 
 llvm_stmt(block(B)) --> atom(B), ":".
 
@@ -89,12 +93,13 @@ llvm_stmt(V = OpE) -->
 llvm_stmt(if(Cond, Lab1, Lab2)) -->
     "br i1 ", atom(Cond), ", label %", atom(Lab1), ", label %", atom(Lab2).
 
-llvm_stmt(jmp(Lab)) --> "br label %", atom(Lab).
+llvm_stmt(jump(Lab)) --> "br label %", atom(Lab).
 
 llvm_stmt(ret) --> "ret void".
 llvm_stmt(ret(Type, V)) --> "ret ", llvm_type(Type), " ", atom(V).
 
-llvm_stmt(_) --> [].
+llvm_stmt(S) --> ">>>>> ", atom(S).
+% llvm_stmt(_) --> [].
 
 
 
