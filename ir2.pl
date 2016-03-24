@@ -15,7 +15,7 @@ E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
 E.add_var(Id, Type) := E.put(var_types, E.var_types.put(Id, Type)).
 E.get_var(Id) := E.var_types.Id.
 
-E.add_ask(Key, Val) := E.put(ask, E.ask.put(Key,Val)).
+E.add_ask(Key, Val) := E.add_ask(_{}.put(Key,Val)).
 E.add_ask(_{}) := E :- !.
 E.add_ask(Ask) := E2.add_ask(Ask2) :-
     Val = Ask.get(Key),
@@ -36,6 +36,9 @@ E.add_mod(Key, Val) := E2 :-
 
 E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
 
+%%%%%%%%%%%%%%%
+%%% MERGING %%%
+%%%%%%%%%%%%%%%
 
 ir_while_merge(PreEnv, PostEnv, NewEnv) -->
     ir_while_merge_mods(PreEnv, PostEnv.last_block, PostEnv.mod, Env1),
@@ -77,35 +80,37 @@ ir_merge_if_mods(PreEnv, _, _{}, _, _{}, PreEnv) --> [].
 ir_merge_if_mods(PreEnv, Label1, _{}, Label2, Mod2, NewEnv) -->
     ir_merge_if_mods(PreEnv, Label2, Mod2, Label1, _{}, NewEnv).
 
-ir_exps(_, [], [], _{}) --> [].
+%%%%%%%%%%%%%%%%%%%
+%%% EXPRESSIONS %%%
+%%%%%%%%%%%%%%%%%%%
+
+ir_exps(Env, [], [], Env) --> [].
 ir_exps(Env, [H|T], [HV|TV], OutEnv) -->
     ir_exp(Env, H, HV, EOutEnv),
-    ir_exps(Env, T, TV, TOutEnv),
-    OutEnv = TOutEnv.put(EOutEnv).
+    ir_exps(EOutEnv, T, TV, OutEnv).
 
 % ir_exp( Expression, Value, AskSet )
-ir_exp(_, int(I), I, _{}) --> !, [].
-ir_exp(_, var(Id), Reg, _{}.put(Id, Reg)) --> !, [].
-ir_exp(_, false, 0, _{}) --> !, [].
-ir_exp(_, true, 1, _{}) --> !, [].
+ir_exp(Env, int(I), I, Env) --> !, [].
+ir_exp(Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
+ir_exp(Env, false, 0, Env) --> !, [].
+ir_exp(Env, true, 1, Env) --> !, [].
 
-ir_exp(Env, app(Fun, ArgExps), V, ArgAsk) -->
-    ir_exps(Env, ArgExps, ArgVals, ArgAsk),
+ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
+    ir_exps(Env, ArgExps, ArgVals, NewEnv),
     [ V = app(Env.funs.Fun.ret, Fun, ArgVals) ].
 
 ir_exp(Env, E, V, NewEnv) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=','==']), VV =.. [Op, V1, V2] }, !,
     ir_exp(Env, E1, V1, Env1),
-    ir_exp(Env, E2, V2, Env2),
-    [V = VV],
-    { NewEnv = Env1.put(Env2) }.
+    ir_exp(Env1, E2, V2, NewEnv),
+    [V = VV].
 
 ir_exp(Env, '||'(E1,E2), V, NewEnv) -->
     ir_exp(Env, E1, V1, Env1),
     [ if(V1, True, Second) ],
     
     [ block(Second) ],
-    ir_exp(Env, E2, V2, Env2),
+    ir_exp(Env1, E2, V2, NewEnv),
     [ if(V2, True, False) ],
     
     [ block(True),
@@ -114,16 +119,14 @@ ir_exp(Env, '||'(E1,E2), V, NewEnv) -->
     [ block(False),
       jump(End) ],
     
-    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ],
-    
-    { NewEnv = Env1.put(Env2) }.
+    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
 
 ir_exp(Env, '&&'(E1,E2), V, NewEnv) -->
     ir_exp(Env, E1, V1, Env1),
     [ if(V1, Second, False) ],
     
     [ block(Second) ],
-    ir_exp(Env, E2, V2, Env2),
+    ir_exp(Env1, E2, V2, NewEnv),
     [ if(V2, True, False) ],
     
     [ block(True),
@@ -132,12 +135,11 @@ ir_exp(Env, '&&'(E1,E2), V, NewEnv) -->
     [ block(False),
       jump(End) ],
     
-    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ],
+    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
     
-    { Env1 >:< Env2, NewEnv = Env1.put(Env2) }.
-    
-
-%%%
+%%%%%%%%%%%%%%%%%%
+%%% STATEMENTS %%%
+%%%%%%%%%%%%%%%%%%
 
 ir_stmts(Env, [], Env) --> [].
 ir_stmts(InEnv, [H|T], OutEnv) -->
@@ -153,14 +155,13 @@ ir_stmt(InEnv, block(Stmts), NewEnv) -->
     { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block) }.
 
 ir_stmt(InEnv, Id = Exp, OutEnv) -->
-    ir_exp(InEnv, Exp, V, ExpAskSet),
-    { OutEnv = InEnv.add_ask(ExpAskSet).add_mod(Id, V) }.
+    ir_exp(InEnv, Exp, V, ExpEnv),
+    { OutEnv = ExpEnv.add_mod(Id, V) }.
 
 ir_stmt(Env, return, Env) --> [ret].
 ir_stmt(Env, return(Exp), NewEnv) -->
-    ir_exp(Env, Exp, V, Ask),
-    [ret(Env.return_type, V)],
-    { NewEnv = Env.add_ask(Ask) }.
+    ir_exp(Env, Exp, V, NewEnv),
+    [ret(Env.return_type, V)].
 
 ir_stmt(InEnv, incr(Id), OutEnv) --> ir_stmt(InEnv, Id = var(Id) + int(1), OutEnv).
 ir_stmt(InEnv, decr(Id), OutEnv) --> ir_stmt(InEnv, Id = var(Id) - int(1), OutEnv).
@@ -175,19 +176,18 @@ ir_stmt(Env, decl(Type, [ noinit(Id) | T ]), NewEnv) -->
 
 
 ir_stmt(Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
-    ir_exp(Env, Exp, V, Ask),
-    ir_stmt(Env.add_var(Id, Type).add_ask(Ask).add_create(Id, V), decl(Type,T), NewEnv).
+    ir_exp(Env, Exp, V, ExpEnv),
+    ir_stmt(ExpEnv.add_var(Id, Type).add_create(Id, V), decl(Type,T), NewEnv).
 
 
 ir_stmt(Env, expstmt(Exp), NewEnv) -->
-    ir_exp(Env, Exp, _, Ask),
-    { NewEnv = Env.add_ask(Ask) }.
+    ir_exp(Env, Exp, _, NewEnv).
 
 ir_stmt(Env, if(If, Then, Else), NewEnv) -->
-    ir_exp(Env, If, V, CondAsk),
+    ir_exp(Env, If, V, CondEnv),
     [ if(V, ThenBlock, ElseBlock) ],
     
-    { EmptyEnv = Env.reset().add_ask(CondAsk) },
+    { EmptyEnv = CondEnv.reset() },
     
     ir_block(EmptyEnv, ThenBlock, ThenEnv),
     ir_stmt(ThenEnv, Then, PostThenEnv),
@@ -212,10 +212,10 @@ ir_stmt(Env, while(While, Do), NewEnv) -->
     
     ir_block(EmptyEnv, CondBlock, _),
     ir_while_merge(Env, PostDoEnv, MergeEnv),
-    ir_exp(MergeEnv, While, V, CondAsk),
+    ir_exp(MergeEnv, While, V, CondEnv),
     [ if(V, DoBlock, EndBlock) ],
     
-    ir_block(MergeEnv.add_ask(CondAsk), EndBlock, NewEnv)
+    ir_block(CondEnv, EndBlock, NewEnv)
 . % while
 
 
@@ -226,7 +226,9 @@ ir_block(Env, Label, NewEnv) -->
     [ block(Label) ],
     { NewEnv = Env.put(last_block, Label) }.
 
-%%%%
+%%%%%%%%%%%%%%%
+%%% PROGRAM %%%
+%%%%%%%%%%%%%%%
 
 ir_args([], _{}, []).
 ir_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
