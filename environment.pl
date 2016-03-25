@@ -4,7 +4,8 @@ emptyenv( environment{
     return : void,
     functions : functions{
         printInt : fun{ return: void, args: [int], extern: true },
-        printString : fun{ return: void, args: [string], extern: true }
+        printString : fun{ return: void, args: [string], extern: true },
+        concat : fun{ return: string, args: [string, string], extern: true }
     },
     stack : [],
     returned : false

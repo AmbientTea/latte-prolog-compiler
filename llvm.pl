@@ -10,7 +10,13 @@ llvm_compile(In, Out) :-
 
 %%% instantiation %%%
 
-llvm_inst(Prog) :- maplist(llvm_inst_fun, Prog).
+llvm_inst(Prog) :- llvm_inst(0, Prog).
+
+llvm_inst(_, []).
+llvm_inst(C, [string(Lab, _, _) | T]) :-
+    atomic_concat('@str', C, Lab), C1 is C+1,
+    llvm_inst(C1, T).
+llvm_inst(C, [H|T]) :- llvm_inst_fun(H), llvm_inst(C, T).
 
 llvm_inst_fun(function(_, _, Args, Body)) :-
     foldl(llvm_inst_arg, Args, 1, _),
@@ -41,13 +47,13 @@ llvm_type(void) --> "void".
 
 llvm_types([]) --> [].
 llvm_types([T]) --> llvm_type(T).
-llvm_types([H|T]) --> llvm_type(H), llvm_types(T).
+llvm_types([H|T]) --> llvm_type(H), ", ", llvm_types(T).
 
 % arguments
 llvm_args([]) --> [].
 llvm_args([(Var,Type) | T]) -->
     llvm_type(Type), " ", atom(Var),
-    ( { T = [] } -> [] ; ", ", llvm_argS(T)).
+    ( { T = [] } -> [] ; ", ", llvm_args(T)).
 
 % operator info
 llvm_op(+, "add", "i32", "i32").
@@ -67,6 +73,9 @@ llvm_fun(function(Type, Fun, Args, Body)) -->
     "\n}". 
 llvm_fun(decl(Fun, Type, Args)) -->
     "declare ", llvm_type(Type), " @", atom(Fun), "(", llvm_types(Args), ")\n".
+llvm_fun(string(Lab, Str, Len)) -->
+    atom(Lab), " = private constant [", atom(Len), " x i8] c\"", atom(Str), "\", align 1\n".
+% @.str = private constant [5 x i8] c"Hello", align 1
 
 indent(block(_)) --> "".
 indent(_) --> "    ".
@@ -91,6 +100,9 @@ llvm_stmt(V = call(Type, Fun, Args)) -->
     atom(V), " = call ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), ")".
 llvm_stmt(call(Fun, Args)) -->
     "call ", llvm_type(void), " @", atom(Fun), "(", llvm_args(Args), ")".
+
+llvm_stmt(V = strcast(Len, Lab)) -->
+    atom(V), " = bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
 
 llvm_stmt(V = OpE) -->
     { OpE =.. [Op, V1, V2], llvm_op(Op, LLOp, InT, _) },

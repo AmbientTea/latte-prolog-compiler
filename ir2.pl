@@ -8,7 +8,8 @@ ir_env(Type, Funs, ir2{
     last_block: 0,
     return_type: Type,
     var_types: _{},
-    funs: Funs
+    funs: Funs,
+    strings: []
 }).
 
 E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
@@ -35,6 +36,8 @@ E.add_mod(Key, Val) := E2 :-
     ; E2 = E.put(mod, E.mod.put(Key, Val)).
 
 E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
+
+E.add_string(Str, Lab, Len) := E.put(strings, [(Str, Lab, Len) | E.strings]).
 
 %%%%%%%%%%%%%%%
 %%% MERGING %%%
@@ -94,17 +97,30 @@ ir_exp(Env, int(I), I, Env) --> !, [].
 ir_exp(Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
 ir_exp(Env, false, 0, Env) --> !, [].
 ir_exp(Env, true, 1, Env) --> !, [].
+ir_exp(Env, str(Str1), V, NewEnv) -->
+    [ V = strcast(Len, StrLab) ],
+    { string_length(Str1, Len1), Len is Len1 + 1,
+      string_concat(Str1, "\0", Str),
+      atom_string(StrKey, Str),
+      NewEnv = Env.add_string(StrKey, StrLab, Len) }.
 
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
     ir_exps(Env, ArgExps, ArgVals, NewEnv),
     { zip(ArgVals, Env.funs.Fun.args, Args) },
     {Type = Env.funs.Fun.return},
-    ({Type = void} ->
+    ({ Type = void } ->
       [ call(Fun, Args) ]
     ; [ V = call(Type, Fun, Args) ]).
 
+ir_exp(Env, '++'(E1, E2), V, NewEnv) --> ir_exp(Env, app(concat, [E1, E2]), V, NewEnv).
+
+ir_exp(Env, '=='(_, E1, E2), V, NewEnv) -->
+    ir_exp(Env, E1, V1, Env1),
+    ir_exp(Env1, E2, V2, NewEnv),
+    [V = '=='(V1,V2)].
+
 ir_exp(Env, E, V, NewEnv) -->
-    { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=','==']), VV =.. [Op, V1, V2] }, !,
+    { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=', '==']), VV =.. [Op, V1, V2] }, !,
     ir_exp(Env, E1, V1, Env1),
     ir_exp(Env1, E2, V2, NewEnv),
     [V = VV].
@@ -140,7 +156,8 @@ ir_exp(Env, '&&'(E1,E2), V, NewEnv) -->
       jump(End) ],
     
     [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
-    
+
+ir_exp(_, E, _, _) --> { writeln(fail:E), halt }.
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
@@ -173,9 +190,9 @@ ir_stmt(InEnv, decr(Id), OutEnv) --> ir_stmt(InEnv, Id = var(Id) - int(1), OutEn
 
 ir_stmt(Env, decl(_, []), Env) --> [].
 ir_stmt(Env, decl(Type, [ noinit(Id) | T ]), NewEnv) -->
-    ( Type = int -> Def = 0
+    { Type = int -> Def = 0
     ; Type = boolean -> Def = 0
-    ; Type = string -> Def = "" ),
+    ; Type = string -> Def = "" },
     ir_stmt(Env.add_var(Id, Type).add_create(Id, Def), decl(Type,T), NewEnv).
 
 
@@ -223,12 +240,13 @@ ir_stmt(Env, while(While, Do), NewEnv) -->
 . % while
 
 
-ir_stmt(S) --> { writeln(S), fail }.
+% ir_stmt(S) --> { writeln(S), fail }.
 
 
 ir_block(Env, Label, NewEnv) -->
     [ block(Label) ],
     { NewEnv = Env.put(last_block, Label) }.
+
 
 %%%%%%%%%%%%%%%
 %%% PROGRAM %%%
@@ -244,8 +262,9 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
     {
         ir_env(Ret, InEnv.functions, Env),
         ir_args(Args, Mod, NArgs),
-        phrase(ir_stmts(Env.add_mod_set(Mod), Body, _), Code)
+        phrase(ir_stmts(Env.add_mod_set(Mod), Body, FunEnv), Code)
     },
+    ir_str_decls(FunEnv.strings),
     [ function(Ret, Fun, NArgs, Code) ].
 
 ir_funs(_, []) --> [].
@@ -257,6 +276,10 @@ ir_fun_decls(Decls) -->
     ({ Fun.extern = false } ; [ decl(Key, Fun.return, Fun.args) ]),
     ir_fun_decls(Decls2).
 
+ir_str_decls([]) --> [].
+ir_str_decls( [(Str, Lab, Len) | Strings2] ) -->
+    [ string(Lab, Str, Len) ],
+    ir_str_decls(Strings2).
 
 program(Env, Program) -->
     ir_fun_decls(Env.functions),
