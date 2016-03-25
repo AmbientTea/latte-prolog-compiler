@@ -9,5 +9,5 @@ fi;
 
 echo $OUT
 
-./latc.pl -m compile $IN | llvm-as | llvm-link - lib/stdlib.llvm -o $OUT &&
-chmod +x $OUT
+./latc.pl -m compile $IN | llvm-as | llvm-link - lib/runtime.bc -o $OUT &&
+    chmod +x $OUT
