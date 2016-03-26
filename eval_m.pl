@@ -61,10 +61,9 @@ M.eval_exp('%'(E1,E2)) := V :- V is M.eval_exp(E1) mod M.eval_exp(E2).
 M.eval_exp(E1 < E2) := V :- M.eval_exp(E1) < M.eval_exp(E2) -> V = true ; V = false.
 M.eval_exp(E1 > E2) := V :- M.eval_exp(E1) =< M.eval_exp(E2) -> V = false ; V = true.
 M.eval_exp('=='(_,E1,E2)) := V :- M.eval_exp(E1) = M.eval_exp(E2) -> V = true ; V = false.
-M.eval_exp('=='(E1,E2)) := V :- M.eval_exp(E1) = M.eval_exp(E2) -> V = true ; V = false.
 M.eval_exp('<='(E1,E2)) := V :- M.eval_exp(E1) =< M.eval_exp(E2) -> V = true ; V = false.
 M.eval_exp('>='(E1,E2)) := V :- M.eval_exp(E1) >= M.eval_exp(E2) -> V = true ; V = false.
-M.eval_exp('!='(E1,E2)) := V :- M.eval_exp(E1) = M.eval_exp(E2) -> V = false ; V = true.
+M.eval_exp('!='(_, E1,E2)) := V :- M.eval_exp(E1) = M.eval_exp(E2) -> V = false ; V = true.
 
 M.eval_exp(not(Exp)) := V :- M.eval_exp(Exp) = true -> V = false ; V = true.
 M.eval_exp('||'(E1,E2)) := V :-

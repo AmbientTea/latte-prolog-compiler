@@ -1,4 +1,4 @@
-:- module(utils, [fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3]).
+:- module(utils, [fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3, dcg_foldl//4, dcg_foldl//5]).
 
 
 fail(S, A) :- string_concat(S,"~n",SS), format(SS, A), fail.
@@ -36,5 +36,19 @@ separated(Sep, Clause, [H | T]) -->
 
 :- module_transparent dgc_map//2.
 dgc_map(_, []) --> [].
+dgc_map(Clause, [H|T]) -->
+    { Clause =.. [Op | Args], append(Args, [H], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T).
 dgc_map(Clause, [H|T]) --> { Run =.. [Clause, H] }, Run, dgc_map(Clause, T).
 
+:- module_transparent dcg_foldl//4, dcg_foldl//5.
+dcg_foldl(_, V, [], V) --> [].
+dcg_foldl(Clause, V1, [H|T], V2) -->
+    { Run =.. [Clause, V1, H, V3] },
+    Run,
+    dcg_foldl(Clause, V3, T, V2).
+
+dcg_foldl(_, V, [], [], V) --> [].
+dcg_foldl(Clause, V1, [H1|T1], [H2|T2], V2) -->
+    { Run =.. [Clause, V1, H1, H2, V3] },
+    Run,
+    dcg_foldl(Clause, V3, T1, T2, V2).

@@ -15,7 +15,7 @@ compile(In, Out) :-
 
 inst(Prog) :- foldl(inst_topdef, Prog, 0, _).
 
-inst_topdef(string(Lab, _, _), C, C1) :- atomic_concat('@str', C, Lab), C1 is C+1.
+inst_topdef(string(_, Lab, _), C, C1) :- atomic_concat('@str', C, Lab), C1 is C+1.
 
 inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_arg, Args, 1, _),
@@ -72,7 +72,7 @@ topdef(function(Type, Fun, Args, Body)) -->
     "\n}\n". 
 topdef(decl(Fun, Type, Args)) -->
     "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
-topdef(string(Lab, Str, Len)) -->
+topdef(string(Str, Lab, Len)) -->
     atom(Lab), " = private constant [", atom(Len), " x i8] c\"", atom(Str), "\", align 1\n".
 
 indent(block(_)) --> "".

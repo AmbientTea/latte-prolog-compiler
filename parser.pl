@@ -1,11 +1,9 @@
 :- module(parser, [parse/3, tokenize//1]).
 :- use_module(library(dcg/basics)).
 
-parse( Type, File, Query ) :-
+parse( Type, File, Tree ) :-
 	phrase_from_file(tokenize(Tokens), File),
-	Query =.. [Type, _],
-	phrase(Query, Tokens),
-	!.
+	( Type = program, phrase(program(Tree), Tokens) ).
 
 %%%%%%%%%%%%%
 %%% LEXER %%%

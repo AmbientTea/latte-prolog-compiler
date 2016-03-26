@@ -1,5 +1,11 @@
 :- module(ir2, [ir_program/3]).
 
+:- use_module(utils).
+
+:- op(600, xfy, ++).
+:- op(600, xfy, '&&').
+:- op(600, xfy, '||').
+
 
 ir_env(Type, Funs, ir2{
     ask: _{},
@@ -89,12 +95,8 @@ ir_merge_if_mods(PreEnv, Label1, _{}, Label2, Mod2, NewEnv) -->
 %%% EXPRESSIONS %%%
 %%%%%%%%%%%%%%%%%%%
 
-ir_exps(Env, [], [], Env) --> [].
-ir_exps(Env, [H|T], [HV|TV], OutEnv) -->
-    ir_exp(Env, H, HV, EOutEnv),
-    ir_exps(EOutEnv, T, TV, OutEnv).
+ir_exps(Env, L, LL, NewEnv) --> dcg_foldl(ir_exp, Env, L, LL, NewEnv).
 
-% ir_exp( Expression, Value, AskSet )
 ir_exp(Env, int(I), I, Env) --> !, [].
 ir_exp(Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
 ir_exp(Env, false, 0, Env) --> !, [].
@@ -103,8 +105,7 @@ ir_exp(Env, str(Str1), V, NewEnv) -->
     [ V = strcast(Len, StrLab) ],
     { string_length(Str1, Len1), Len is Len1 + 1,
       string_concat(Str1, "\0", Str),
-      atom_string(StrKey, Str),
-      NewEnv = Env.add_string(StrKey, StrLab, Len) }.
+      NewEnv = Env.add_string(Str, StrLab, Len) }.
 
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
     ir_exps(Env, ArgExps, ArgVals, NewEnv),
@@ -114,7 +115,7 @@ ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
       [ call(Fun, Args) ]
     ; [ V = call(Type, Fun, Args) ]).
 
-ir_exp(Env, '++'(E1, E2), V, NewEnv) --> ir_exp(Env, app(concat, [E1, E2]), V, NewEnv).
+ir_exp(Env, E1 ++ E2, V, NewEnv) --> ir_exp(Env, app(concat, [E1, E2]), V, NewEnv).
 
 ir_exp(Env, E, V, NewEnv) -->
     { E =.. [Op, Type, E1, E2], member(Op, ['!=', '==']), VV =.. [Op, Type, V1, V2] }, !,
@@ -144,7 +145,7 @@ ir_exp(_, E, _, _) --> { writeln(fail:E), halt }.
 ir_cond(Env, not(Exp), LabTrue, LabFalse, NewEnv) -->
     ir_cond(Env, Exp, LabFalse, LabTrue, NewEnv).
 
-ir_cond(Env, '&&'(E1,E2), LabTrue, LabFalse, NewEnv) -->
+ir_cond(Env, E1 && E2, LabTrue, LabFalse, NewEnv) -->
     ir_exp(Env, E1, V1, Env1),
     [ if(V1, Second, LabFalse) ],
     
@@ -152,7 +153,7 @@ ir_cond(Env, '&&'(E1,E2), LabTrue, LabFalse, NewEnv) -->
     ir_exp(Env1, E2, V2, NewEnv),
     [ if(V2, LabTrue, LabFalse) ].
 
-ir_cond(Env, '||'(E1,E2), LabTrue, LabFalse, NewEnv) -->
+ir_cond(Env, E1 '||' E2, LabTrue, LabFalse, NewEnv) -->
     ir_exp(Env, E1, V1, Env1),
     [ if(V1, LabTrue, Second) ],
     
@@ -167,10 +168,7 @@ ir_cond(Env, Exp, LabTrue, LabFalse, NewEnv) -->
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
 
-ir_stmts(Env, [], Env) --> [].
-ir_stmts(InEnv, [H|T], OutEnv) -->
-    ir_stmt(InEnv, H, InEnv2), !,
-    ir_stmts(InEnv2, T, OutEnv).
+ir_stmts(Env, Stmts, NewEnv) --> dcg_foldl(ir_stmt, Env, Stmts, NewEnv).
 
 % ir_stmt( InEnv, Statement, OutEnv )
 % ir_stmt(_, S, _) --> { writeln(S), fail }.
@@ -247,13 +245,9 @@ ir_stmt(Env, while(While, Do), NewEnv) -->
     ir_block(CondEnv, EndBlock, NewEnv)
 . % while
 
-
 % ir_stmt(S) --> { writeln(S), fail }.
 
-
-ir_block(Env, Label, NewEnv) -->
-    [ block(Label) ],
-    { NewEnv = Env.put(last_block, Label) }.
+ir_block(Env, Label, Env.put(last_block, Label)) --> [ block(Label) ].
 
 
 %%%%%%%%%%%%%%%
@@ -272,7 +266,7 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
         ir_args(Args, Mod, NArgs),
         phrase(ir_stmts(Env.add_mod_set(Mod), Body, FunEnv), Code1)
     },
-    ir_str_decls(FunEnv.strings),
+    dgc_map(ir_str_decl, FunEnv.strings),
     { prefix(Code1, Code),
       (Ret \= void ->
       append(_, [unreachable], Code)
@@ -280,23 +274,17 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
     },
     [ function(Ret, Fun, NArgs, Code) ].
 
-ir_funs(_, []) --> [].
-ir_funs(Env, [H|T]) --> ir_fun(Env, H), !, ir_funs(Env, T).
-
 ir_fun_decls(_{}) --> [].
 ir_fun_decls(Decls) -->
     { Fun = Decls.get(Key), del_dict(Key, Decls, Fun, Decls2) },
     ({ Fun.extern = false } ; [ decl(Key, Fun.return, Fun.args) ]),
     ir_fun_decls(Decls2).
 
-ir_str_decls([]) --> [].
-ir_str_decls( [(Str, Lab, Len) | Strings2] ) -->
-    [ string(Lab, Str, Len) ],
-    ir_str_decls(Strings2).
+ir_str_decl((Str, Lab, Len)) --> [ string(Str, Lab, Len) ].
 
 program(Env, Program) -->
     ir_fun_decls(Env.functions),
-    ir_funs(Env, Program).
+    dgc_map(ir_fun(Env), Program).
 
 
 ir_program(Env, Program, IR) :-
