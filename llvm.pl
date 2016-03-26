@@ -3,6 +3,7 @@
 :- use_module(library(dcg/basics)).
 :- use_module(library(apply)).
 :- use_module(utils).
+
 % top level llvm translation
 compile(In, Out) :-
     inst(In),
@@ -12,28 +13,25 @@ compile(In, Out) :-
 %%% instantiation %%%
 %%%%%%%%%%%%%%%%%%%%%
 
-inst(Prog) :- inst(0, Prog).
+inst(Prog) :- foldl(inst_topdef, Prog, 0, _).
 
-inst(_, []).
-inst(C, [string(Lab, _, _) | T]) :-
-    atomic_concat('@str', C, Lab), C1 is C+1,
-    inst(C1, T).
-inst(C, [H|T]) :- inst_fun(H), inst(C, T).
+inst_topdef(string(Lab, _, _), C, C1) :- atomic_concat('@str', C, Lab), C1 is C+1.
 
-inst_fun(function(_, _, Args, Body)) :-
+inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_arg, Args, 1, _),
     foldl(inst_instr, Body, (1,1), _).
-inst_fun(_).
+
+inst_topdef(decl(_, _, _), C, C).
+inst_topdef(string(_, _, _), C, C).
 
 inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
 inst_instr(V = _, (C,LC), (C1,LC)) :-
-    !, atomic_concat('%', C, V), C1 is C + 1.
+    atomic_concat('%', C, V), C1 is C + 1.
 inst_instr(block(Bl), (C,LC), (C,LC1)) :-
-    !, atomic_concat('label', LC, Bl),
-    LC1 is LC + 1.
-inst_instr(ret(_,_), (X,C), (X1,C)) :- !, X1 is X+1.
-inst_instr(ret, (X,C), (X1,C)) :- !, X1 is X+1.
+    atomic_concat('label', LC, Bl), LC1 is LC + 1.
+inst_instr(ret(_,_), (X,C), (X1,C)) :- X1 is X+1.
+inst_instr(ret, (X,C), (X1,C)) :- X1 is X+1.
 inst_instr(_, C, C).
 
 %%%%%%%%%%%%%%%%%%%
