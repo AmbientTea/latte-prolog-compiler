@@ -5,7 +5,9 @@ emptyenv( environment{
     functions : functions{
         printInt : fun{ return: void, args: [int], extern: true },
         printString : fun{ return: void, args: [string], extern: true },
-        concat : fun{ return: string, args: [string, string], extern: true }
+        concat : fun{ return: string, args: [string, string], extern: true },
+        readInt : fun{ return: int, args: [], extern: true },
+        readString : fun{ return: string, args: [], extern: true }
     },
     stack : [],
     returned : false

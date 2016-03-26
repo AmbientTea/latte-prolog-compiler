@@ -45,7 +45,7 @@
 	; file_name_extension(Base, _, File), file_name_extension(Base, ".out", Out)),
 	(parse(Cont, File, Tree) -> true ; fail("parsing failed") ),
 	(check(Cont, Tree, Env, NTree) -> true ; fail("type check failed")),
-	% writeln(NTree),
+
 	( Mode = eval ->
 	    ( Cont = exp -> eval_exp(NTree)
 	    ; Cont = stmt -> eval_stmt(NTree)

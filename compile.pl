@@ -5,7 +5,7 @@
 :- use_module(llvm).
 :- use_module(peephole).
 
-compile(Env, program(Prog), Out) :-
+compile(Env, Prog, Out) :-
     ir_program(Env,Prog, IR), !,
     optimize(IR, OpIR), !,
     llvm:compile(OpIR, Out1),
