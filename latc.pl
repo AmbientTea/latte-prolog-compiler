@@ -22,7 +22,7 @@
 		  ]
 		, [ opt(mode)
 		  , type(atom)
-		  , default(eval)
+		  , default(compile)
 		  , shortflags([m])
 		  , longflags(['mode'])
 		  , help(['mode: eval, compile'])

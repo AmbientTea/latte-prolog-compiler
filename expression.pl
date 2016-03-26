@@ -33,7 +33,7 @@ types( Env, E, int, NE ) :-
 
 types(Env, E, boolean, NE) :-
 	E =.. [Op, E1, E2],
-	member(Op, [<,>,'<=','>=','!=']), !,
+	member(Op, [<,>,'<=','>=']), !,
 	expect_type(Env, E1, int, NE1),
 	expect_type(Env, E2, int, NE2),
 	NE =.. [Op, NE1, NE2].
@@ -48,6 +48,7 @@ types(Env, E, boolean, NE) :-
 types(Env, not(E), boolean, not(NE)) :- expect_type(Env, E, boolean, NE).
 
 types(Env, E1 == E2, boolean, '=='(T, NE1, NE2)) :- types(Env, E1, T, NE1), expect_type(Env, E2, T, NE2).
+types(Env, '!='(E1, E2), boolean, '!='(T, NE1, NE2)) :- types(Env, E1, T, NE1), expect_type(Env, E2, T, NE2).
 
 %%% FUNCTIONS %%%
 

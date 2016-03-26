@@ -25,11 +25,13 @@ llvm_inst_fun(_).
 
 llvm_inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
-llvm_inst_instr(V = _, (C,LC), (C1,LC)) :- atomic_concat('%', C, V), C1 is C + 1.
+llvm_inst_instr(V = _, (C,LC), (C1,LC)) :-
+    !, atomic_concat('%', C, V), C1 is C + 1.
 llvm_inst_instr(block(Bl), (C,LC), (C,LC1)) :-
-    atomic_concat('label', LC, Bl),
+    !, atomic_concat('label', LC, Bl),
     LC1 is LC + 1.
-% llvm_inst_instr(ret(int,_), X, X).
+llvm_inst_instr(ret(_,_), (X,C), (X1,C)) :- !, X1 is X+1.
+llvm_inst_instr(ret, (X,C), (X1,C)) :- !, X1 is X+1.
 llvm_inst_instr(_, C, C).
 
 %%%%%%%%%%%%%%%%%%%
@@ -59,18 +61,20 @@ llvm_args([(Var,Type) | T]) -->
 llvm_op(+, "add", "i32", "i32").
 llvm_op(-, "sub", "i32", "i32").
 llvm_op(*, "mul", "i32", "i32").
-llvm_op(/, "div", "i32", "i32").
+llvm_op(/, "sdiv", "i32", "i32").
+llvm_op('%', "srem", "i32", "i32").
 
 llvm_op(>, "icmp sgt", "i32", "i1").
 llvm_op(<, "icmp slt", "i32", "i1").
-llvm_op('==', "icmp eq", "i32", "i1").
+llvm_op(>, "icmp sgt", "i32", "i1").
+llvm_op('<=', "icmp sle", "i32", "i1").
 
 
 % functions
 llvm_fun(function(Type, Fun, Args, Body)) -->
     "define ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), "){",
     llvm_stmts(Body),
-    "\n}". 
+    "\n}\n". 
 llvm_fun(decl(Fun, Type, Args)) -->
     "declare ", llvm_type(Type), " @", atom(Fun), "(", llvm_types(Args), ")\n".
 llvm_fun(string(Lab, Str, Len)) -->
@@ -104,6 +108,12 @@ llvm_stmt(call(Fun, Args)) -->
 llvm_stmt(V = strcast(Len, Lab)) -->
     atom(V), " = bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
 
+
+llvm_stmt(V = '=='(Type, V1, V2)) -->
+    atom(V), " = icmp eq ", llvm_type(Type), " ", atom(V1), ", ", atom(V2).
+llvm_stmt(V = '!='(Type, V1, V2)) -->
+    atom(V), " = icmp ne ", llvm_type(Type), " ", atom(V1), ", ", atom(V2).
+
 llvm_stmt(V = OpE) -->
     { OpE =.. [Op, V1, V2], llvm_op(Op, LLOp, InT, _) },
     atom(V), " = ", LLOp, " ", InT, " ", atom(V1), ", ", atom(V2).
@@ -115,6 +125,8 @@ llvm_stmt(jump(Lab)) --> "br label %", atom(Lab).
 
 llvm_stmt(ret) --> "ret void".
 llvm_stmt(ret(Type, V)) --> "ret ", llvm_type(Type), " ", atom(V).
+
+llvm_stmt(unreachable) --> "unreachable".
 
 llvm_stmt(S) --> ">>>>> ", atom(S).
 % llvm_stmt(_) --> [].

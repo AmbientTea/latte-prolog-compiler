@@ -64,7 +64,9 @@ ir_while_merge_mods(PreEnv, _, _{}, PreEnv) --> [].
 ir_merge_if(PreEnv, PostThenEnv, PostElseEnv, NewEnv) -->
     ir_merge_if_mods(PreEnv.add_ask(PostThenEnv.ask).add_ask(PostElseEnv.ask),
                              PostThenEnv.last_block, PostThenEnv.mod,
-                             PostElseEnv.last_block, PostElseEnv.mod, NewEnv).
+                             PostElseEnv.last_block, PostElseEnv.mod, NewEnv1),
+    { append([PreEnv.strings, PostThenEnv.strings, PostElseEnv.strings], Strings),
+      NewEnv = NewEnv1.put(strings, Strings) }.
 
 ir_merge_if_mods(PreEnv, Label1, Mod1, Label2, Mod2, NewEnv) -->
     { V1 = Mod1.get(K), del_dict(K, Mod1, V1, NewMod1) },
@@ -114,24 +116,20 @@ ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
 
 ir_exp(Env, '++'(E1, E2), V, NewEnv) --> ir_exp(Env, app(concat, [E1, E2]), V, NewEnv).
 
-ir_exp(Env, '=='(_, E1, E2), V, NewEnv) -->
+ir_exp(Env, E, V, NewEnv) -->
+    { E =.. [Op, Type, E1, E2], member(Op, ['!=', '==']), VV =.. [Op, Type, V1, V2] }, !,
     ir_exp(Env, E1, V1, Env1),
     ir_exp(Env1, E2, V2, NewEnv),
-    [V = '=='(V1,V2)].
+    [V = VV], !.
 
 ir_exp(Env, E, V, NewEnv) -->
-    { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=','!=', '==']), VV =.. [Op, V1, V2] }, !,
+    { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=']), VV =.. [Op, V1, V2] }, !,
     ir_exp(Env, E1, V1, Env1),
     ir_exp(Env1, E2, V2, NewEnv),
     [V = VV].
 
-ir_exp(Env, '||'(E1,E2), V, NewEnv) -->
-    ir_exp(Env, E1, V1, Env1),
-    [ if(V1, True, Second) ],
-    
-    [ block(Second) ],
-    ir_exp(Env1, E2, V2, NewEnv),
-    [ if(V2, True, False) ],
+ir_exp(Env, Exp, V, NewEnv) -->
+    ir_cond(Env, not(Exp), True, False, NewEnv),
     
     [ block(True),
       jump(End) ],
@@ -140,24 +138,31 @@ ir_exp(Env, '||'(E1,E2), V, NewEnv) -->
       jump(End) ],
     
     [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
-
-ir_exp(Env, '&&'(E1,E2), V, NewEnv) -->
-    ir_exp(Env, E1, V1, Env1),
-    [ if(V1, Second, False) ],
     
-    [ block(Second) ],
-    ir_exp(Env1, E2, V2, NewEnv),
-    [ if(V2, True, False) ],
-    
-    [ block(True),
-      jump(End) ],
-    
-    [ block(False),
-      jump(End) ],
-    
-    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
-
 ir_exp(_, E, _, _) --> { writeln(fail:E), halt }.
+
+ir_cond(Env, not(Exp), LabTrue, LabFalse, NewEnv) -->
+    ir_cond(Env, Exp, LabFalse, LabTrue, NewEnv).
+
+ir_cond(Env, '&&'(E1,E2), LabTrue, LabFalse, NewEnv) -->
+    ir_exp(Env, E1, V1, Env1),
+    [ if(V1, Second, LabFalse) ],
+    
+    [ block(Second) ],
+    ir_exp(Env1, E2, V2, NewEnv),
+    [ if(V2, LabTrue, LabFalse) ].
+
+ir_cond(Env, '||'(E1,E2), LabTrue, LabFalse, NewEnv) -->
+    ir_exp(Env, E1, V1, Env1),
+    [ if(V1, LabTrue, Second) ],
+    
+    [ block(Second) ],
+    ir_exp(Env1, E2, V2, NewEnv),
+    [ if(V2, LabTrue, LabFalse) ].
+
+ir_cond(Env, Exp, LabTrue, LabFalse, NewEnv) -->
+    ir_exp(Env, Exp, V, NewEnv),
+    [ if(V, LabTrue, LabFalse) ].
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
@@ -170,10 +175,12 @@ ir_stmts(InEnv, [H|T], OutEnv) -->
 % ir_stmt( InEnv, Statement, OutEnv )
 % ir_stmt(_, S, _) --> { writeln(S), fail }.
 
+ir_stmt(Env, skip, Env) --> [].
+
 ir_stmt(InEnv, block(Stmts), NewEnv) -->
     { TempEnv = InEnv.reset() },
     ir_stmts(TempEnv, Stmts, OutEnv),
-    { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block) }.
+    { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block).put(strings, OutEnv.strings) }.
 
 ir_stmt(InEnv, Id = Exp, OutEnv) -->
     ir_exp(InEnv, Exp, V, ExpEnv),
@@ -204,6 +211,7 @@ ir_stmt(Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
 ir_stmt(Env, expstmt(Exp), NewEnv) -->
     ir_exp(Env, Exp, _, NewEnv).
 
+ir_stmt(Env, if(If, Then), NewEnv) --> ir_stmt(Env, if(If, Then, skip), NewEnv).
 ir_stmt(Env, if(If, Then, Else), NewEnv) -->
     ir_exp(Env, If, V, CondEnv),
     [ if(V, ThenBlock, ElseBlock) ],
@@ -219,7 +227,7 @@ ir_stmt(Env, if(If, Then, Else), NewEnv) -->
     [ jump(EndBlock) ],
     
     ir_block(Env, EndBlock, PostEnv),
-    ir_merge_if(PostEnv, PostThenEnv, PostElseEnv, NewEnv).
+    ir_merge_if(PostEnv.add_ask(CondEnv.ask), PostThenEnv, PostElseEnv, NewEnv).
     
 
 ir_stmt(Env, while(While, Do), NewEnv) -->
@@ -262,9 +270,14 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
     {
         ir_env(Ret, InEnv.functions, Env),
         ir_args(Args, Mod, NArgs),
-        phrase(ir_stmts(Env.add_mod_set(Mod), Body, FunEnv), Code)
+        phrase(ir_stmts(Env.add_mod_set(Mod), Body, FunEnv), Code1)
     },
     ir_str_decls(FunEnv.strings),
+    { prefix(Code1, Code),
+      (Ret \= void ->
+      append(_, [unreachable], Code)
+    ; append(_, [ret, unreachable], Code))
+    },
     [ function(Ret, Fun, NArgs, Code) ].
 
 ir_funs(_, []) --> [].
@@ -287,7 +300,7 @@ program(Env, Program) -->
 
 
 ir_program(Env, Program, IR) :-
-    phrase(program(Env, Program), IR)
+    phrase(program(Env, Program), IR), !
 .
 
 
