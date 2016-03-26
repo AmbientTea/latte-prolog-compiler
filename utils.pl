@@ -1,4 +1,4 @@
-:- module(utils, [fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3]).
+:- module(utils, [fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3]).
 
 
 fail(S, A) :- string_concat(S,"~n",SS), format(SS, A), fail.
@@ -26,3 +26,15 @@ dict_minus(Dict, MinDict, NewDict) :-
     ( del_dict(El, Dict, _, Dict2), ! ; Dict2 = Dict ),
     del_dict(El, MinDict, _, MinDict2), !,
     dict_minus(Dict2, MinDict2, NewDict).
+
+:- module_transparent separated//3.
+separated(_, _, []) --> [].
+separated(Sep, Clause, [H | T]) -->
+    { ClauseRun =.. [Clause, H] },
+    ClauseRun,
+    ({T = []} -> [] ; Sep, separated(Sep, Clause, T)).
+
+:- module_transparent dgc_map//2.
+dgc_map(_, []) --> [].
+dgc_map(Clause, [H|T]) --> { Run =.. [Clause, H] }, Run, dgc_map(Clause, T).
+

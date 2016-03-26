@@ -1,139 +1,125 @@
-:- module(llvm, [llvm_compile/2]).
+:- module(llvm, [compile/2]).
 
 :- use_module(library(dcg/basics)).
 :- use_module(library(apply)).
-
+:- use_module(utils).
 % top level llvm translation
-llvm_compile(In, Out) :-
-    llvm_inst(In),
-    phrase(llvm_compile(In), Out).
+compile(In, Out) :-
+    inst(In),
+    phrase(compile(In), Out).
 
+%%%%%%%%%%%%%%%%%%%%%
 %%% instantiation %%%
+%%%%%%%%%%%%%%%%%%%%%
 
-llvm_inst(Prog) :- llvm_inst(0, Prog).
+inst(Prog) :- inst(0, Prog).
 
-llvm_inst(_, []).
-llvm_inst(C, [string(Lab, _, _) | T]) :-
+inst(_, []).
+inst(C, [string(Lab, _, _) | T]) :-
     atomic_concat('@str', C, Lab), C1 is C+1,
-    llvm_inst(C1, T).
-llvm_inst(C, [H|T]) :- llvm_inst_fun(H), llvm_inst(C, T).
+    inst(C1, T).
+inst(C, [H|T]) :- inst_fun(H), inst(C, T).
 
-llvm_inst_fun(function(_, _, Args, Body)) :-
-    foldl(llvm_inst_arg, Args, 1, _),
-    foldl(llvm_inst_instr, Body, (1,1), _).
-llvm_inst_fun(_).
+inst_fun(function(_, _, Args, Body)) :-
+    foldl(inst_arg, Args, 1, _),
+    foldl(inst_instr, Body, (1,1), _).
+inst_fun(_).
 
-llvm_inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
+inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
-llvm_inst_instr(V = _, (C,LC), (C1,LC)) :-
+inst_instr(V = _, (C,LC), (C1,LC)) :-
     !, atomic_concat('%', C, V), C1 is C + 1.
-llvm_inst_instr(block(Bl), (C,LC), (C,LC1)) :-
+inst_instr(block(Bl), (C,LC), (C,LC1)) :-
     !, atomic_concat('label', LC, Bl),
     LC1 is LC + 1.
-llvm_inst_instr(ret(_,_), (X,C), (X1,C)) :- !, X1 is X+1.
-llvm_inst_instr(ret, (X,C), (X1,C)) :- !, X1 is X+1.
-llvm_inst_instr(_, C, C).
+inst_instr(ret(_,_), (X,C), (X1,C)) :- !, X1 is X+1.
+inst_instr(ret, (X,C), (X1,C)) :- !, X1 is X+1.
+inst_instr(_, C, C).
 
 %%%%%%%%%%%%%%%%%%%
 %%% translation %%%
 %%%%%%%%%%%%%%%%%%%
-llvm_compile([]) --> [].
-llvm_compile([H|T]) --> llvm_fun(H), llvm_compile(T).
-
+compile(Prog) --> dgc_map(topdef, Prog).
 
 % types
-llvm_type(int) --> "i32".
-llvm_type(string) --> "i8*".
-llvm_type(boolean) --> "i1".
-llvm_type(void) --> "void".
+type(int) --> "i32".
+type(string) --> "i8*".
+type(boolean) --> "i1".
+type(void) --> "void".
 
-llvm_types([]) --> [].
-llvm_types([T]) --> llvm_type(T).
-llvm_types([H|T]) --> llvm_type(H), ", ", llvm_types(T).
+types(Types) --> separated(", ", type, Types).
 
 % arguments
-llvm_args([]) --> [].
-llvm_args([(Var,Type) | T]) -->
-    llvm_type(Type), " ", atom(Var),
-    ( { T = [] } -> [] ; ", ", llvm_args(T)).
+fun_arg((Var, Type)) --> type(Type), " ", atom(Var).
+args(Args) --> separated(", ", fun_arg, Args).
+
+phi_arg((V, Lab)) --> "[", atom(V), ", %", atom(Lab), "]".
 
 % operator info
-llvm_op(+, "add", "i32", "i32").
-llvm_op(-, "sub", "i32", "i32").
-llvm_op(*, "mul", "i32", "i32").
-llvm_op(/, "sdiv", "i32", "i32").
-llvm_op('%', "srem", "i32", "i32").
+operator(+, "add", "i32", "i32").
+operator(-, "sub", "i32", "i32").
+operator(*, "mul", "i32", "i32").
+operator(/, "sdiv", "i32", "i32").
+operator('%', "srem", "i32", "i32").
 
-llvm_op(>, "icmp sgt", "i32", "i1").
-llvm_op(<, "icmp slt", "i32", "i1").
-llvm_op(>, "icmp sgt", "i32", "i1").
-llvm_op('<=', "icmp sle", "i32", "i1").
-
+operator(>, "icmp sgt", "i32", "i1").
+operator(<, "icmp slt", "i32", "i1").
+operator(>, "icmp sgt", "i32", "i1").
+operator('<=', "icmp sle", "i32", "i1").
 
 % functions
-llvm_fun(function(Type, Fun, Args, Body)) -->
-    "define ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), "){",
-    llvm_stmts(Body),
+topdef(function(Type, Fun, Args, Body)) -->
+    "define ", type(Type), " @", atom(Fun), "(", args(Args), "){",
+    stmts(Body),
     "\n}\n". 
-llvm_fun(decl(Fun, Type, Args)) -->
-    "declare ", llvm_type(Type), " @", atom(Fun), "(", llvm_types(Args), ")\n".
-llvm_fun(string(Lab, Str, Len)) -->
+topdef(decl(Fun, Type, Args)) -->
+    "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
+topdef(string(Lab, Str, Len)) -->
     atom(Lab), " = private constant [", atom(Len), " x i8] c\"", atom(Str), "\", align 1\n".
-% @.str = private constant [5 x i8] c"Hello", align 1
 
 indent(block(_)) --> "".
 indent(_) --> "    ".
-llvm_stmts([]) --> [].
-llvm_stmts([H|T]) --> "\n", indent(H), /* atom(H), " ----> ", */ llvm_stmt(H), !, llvm_stmts(T).
 
+stmts([]) --> [].
+stmts([H|T]) --> "\n", indent(H), stmt(H), !, stmts(T).
 
 % statements
-llvm_phi_args([]) --> [].
-llvm_phi_args([(V,Lab) | T]) -->
-    "[", atom(V), ", %", atom(Lab), "]", ({ T = []} -> [] ; ", ", llvm_phi_args(T)).
+stmt(block(B)) --> atom(B), ":".
 
+stmt(V = Right ) --> atom(V), " = ", rightval(Right).
 
-%llvm_stmt(S) --> ". ", atom(S).
+stmt(call(Fun, Args)) -->
+    "call void @", atom(Fun), "(", args(Args), ")".
 
-llvm_stmt(block(B)) --> atom(B), ":".
-
-llvm_stmt(  V3 = phi(Type, Args) ) -->
-    atom(V3), " = phi ", llvm_type(Type), " ", llvm_phi_args(Args).
-
-llvm_stmt(V = call(Type, Fun, Args)) -->
-    atom(V), " = call ", llvm_type(Type), " @", atom(Fun), "(", llvm_args(Args), ")".
-llvm_stmt(call(Fun, Args)) -->
-    "call ", llvm_type(void), " @", atom(Fun), "(", llvm_args(Args), ")".
-
-llvm_stmt(V = strcast(Len, Lab)) -->
-    atom(V), " = bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
-
-
-llvm_stmt(V = '=='(Type, V1, V2)) -->
-    atom(V), " = icmp eq ", llvm_type(Type), " ", atom(V1), ", ", atom(V2).
-llvm_stmt(V = '!='(Type, V1, V2)) -->
-    atom(V), " = icmp ne ", llvm_type(Type), " ", atom(V1), ", ", atom(V2).
-
-llvm_stmt(V = OpE) -->
-    { OpE =.. [Op, V1, V2], llvm_op(Op, LLOp, InT, _) },
-    atom(V), " = ", LLOp, " ", InT, " ", atom(V1), ", ", atom(V2).
-
-llvm_stmt(if(Cond, Lab1, Lab2)) -->
+stmt(if(Cond, Lab1, Lab2)) -->
     "br i1 ", atom(Cond), ", label %", atom(Lab1), ", label %", atom(Lab2).
 
-llvm_stmt(jump(Lab)) --> "br label %", atom(Lab).
+stmt(jump(Lab)) --> "br label %", atom(Lab).
 
-llvm_stmt(ret) --> "ret void".
-llvm_stmt(ret(Type, V)) --> "ret ", llvm_type(Type), " ", atom(V).
+stmt(ret) --> "ret void".
+stmt(ret(Type, V)) --> "ret ", type(Type), " ", atom(V).
 
-llvm_stmt(unreachable) --> "unreachable".
+stmt(unreachable) --> "unreachable".
 
-llvm_stmt(S) --> ">>>>> ", atom(S).
-% llvm_stmt(_) --> [].
+stmt(S) --> "*unrecognized*: ", atom(S).
 
+% assignment values
+rightval(phi(Type, Args)) -->
+    "phi ", type(Type), " ", separated(", ", phi_arg, Args).
 
+rightval(call(Type, Fun, Args)) -->
+    "call ", type(Type), " @", atom(Fun), "(", args(Args), ")".
 
+rightval(strcast(Len, Lab)) -->
+    "bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
 
+rightval(OpE) -->
+    { OpE =.. [Op, V1, V2], operator(Op, LLOp, InT, _) },
+    LLOp, " ", InT, " ", atom(V1), ", ", atom(V2).
 
+rightval('=='(Type, V1, V2)) -->
+    "icmp eq ", type(Type), " ", atom(V1), ", ", atom(V2).
 
+rightval('!='(Type, V1, V2)) -->
+    "icmp ne ", type(Type), " ", atom(V1), ", ", atom(V2).
 

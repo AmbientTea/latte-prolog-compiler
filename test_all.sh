@@ -18,7 +18,7 @@ else
         PROG=`./latc $file`
         $PROG > $out
         if [ $? != 0 ]; then exit; fi
-        echo $file ... `$PROG | diff -q - $out`
+        echo compiling $file ... `$PROG | diff -q - $out`
     done;
 
     echo ==========bad=============

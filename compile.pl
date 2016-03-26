@@ -23,7 +23,7 @@ compile(Env, program(Prog), Out) :-
     maplist(random_between(1,99), Vars),
     */
     %writeln(OpIR),
-    llvm_compile(OpIR, Out1),
+    llvm:compile(OpIR, Out1),
     
     %writeln(Out1),  
     string_chars(Out, Out1)

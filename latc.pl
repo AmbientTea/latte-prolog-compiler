@@ -53,7 +53,7 @@
     ; Mode = compile ->
         ( compile(Env, NTree, Code),
             writeln(Code)
-        ; fail("compilation not implemented yet"))
+        ; fail("compilation error or some features not implemented yet"))
     ; fail("invalid mode: ~w", [Mode])),
 	halt(0)
 ) ; /* writeln("something went wrong"), */ halt(-1).
