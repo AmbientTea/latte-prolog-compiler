@@ -8,10 +8,10 @@ eval_exp(Exp) :-
 
 eval_stmt(Stmt) :-
     eval_m(M),
-    _ = M.eval_stmt(Stmt),
+    M ? eval_stmt(Stmt),
     writeln(done).
 
 eval_program(Prog) :-
     eval_m(EM),
     M = EM.load_program(Prog),
-    _ = M.eval_function(main, []).get_return().
+    M ? eval_function(main, []).get_return().

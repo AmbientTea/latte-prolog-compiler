@@ -76,13 +76,13 @@ M.eval_exp('&&'(E1,E2)) := V :-
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
 
-M.eval_stmts(_) := M :- _ = M.get(return), !.
+M.eval_stmts(_) := M :- M ? get(return), !.
 M.eval_stmts([]) := M.
 M.eval_stmts([H|T]) := M.eval_stmt(H).eval_stmts(T).
 
 % _.eval_stmt(S) := _ :- writeln('running' : S), fail.
 
-M.eval_stmt(_) := M :- _ = M.get(return), !.
+M.eval_stmt(_) := M :- M ? get(return), !.
 
 M.eval_stmt(skip) := M.
 M.eval_stmt(return) := M.put(return, ...).
@@ -113,7 +113,7 @@ M.eval_stmt(decl(Type, [H|T])) := M.add_var(Id, Val).eval_stmt(decl(_, T)) :-
     ;
     H = init(Id, Exp) -> Val = M.eval_exp(Exp), !.
 
-M.eval_stmt(expstmt(Exp)) := M :- !, _ = M.eval_exp(Exp).
+M.eval_stmt(expstmt(Exp)) := M :- !, M ? eval_exp(Exp).
 
 
 %%%%%%%%%%%%%%%

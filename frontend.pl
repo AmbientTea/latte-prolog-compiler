@@ -14,5 +14,5 @@ check(program, Tree, Env, NTree) :- correct_program(Tree, Env, NTree).
 check(stmt, Stmt, Env, NStmt) :-
     emptyenv(Env),
     stmt_monad(..., Env, void, M),
-    _ = M.epush().correct(Stmt, NStmt).
+    M.epush() ? correct(Stmt, NStmt).
 check(exp, Exp, Env, NExp) :- emptyenv(Env), types(Env, Exp, Type, NExp), writeln(type: Type).

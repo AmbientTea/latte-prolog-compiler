@@ -56,8 +56,8 @@ M.correct(while(true, Do), while(true, NDo)) := M.epush().correct(Do, NDo).epop(
 M.correct(while(While, Do), while(NWhile,NDo)) :=
     M.expect_type(boolean, While, NWhile).epush().correct(Do, NDo).epop().put(returned, M.returned).
 
-M.correct(if(true, Then, Else), NThen) := M.epush().correct(Then, NThen).epop() :- !, _ = M.epush().correct(Else, _).
-M.correct(if(false, Then, Else), NElse) := M.epush().correct(Else, NElse).epop() :- !, _ = M.epush().correct(Then, _).
+M.correct(if(true, Then, Else), NThen) := M.epush().correct(Then, NThen).epop() :- !, M.epush() ? correct(Else, _).
+M.correct(if(false, Then, Else), NElse) := M.epush().correct(Else, NElse).epop() :- !, M.epush() ? correct(Then, _).
 M.correct(if(If, Then, Else), if(NIf, NThen, NElse)) := M.expect_type(boolean, If, NIf).merge_return(
     M.epush().correct(Then, NThen).epop(),
     M.epush().correct(Else, NElse).epop()).

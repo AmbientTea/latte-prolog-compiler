@@ -37,7 +37,7 @@ E.add_mod_set(Mod) := E.add_mod(Key, Val).add_mod_set(Mod2) :-
     del_dict(Key, Mod, Val, Mod2).
 
 E.add_mod(Key, Val) := E2 :-
-    _ = E.create.get(Key) ->
+    E.create ? get(Key) ->
       E2 = E.put(create, E.create.put(Key, Val))
     ; E2 = E.put(mod, E.mod.put(Key, Val)).
 
