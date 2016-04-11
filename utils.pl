@@ -1,4 +1,4 @@
-:- module(utils, [fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3, dcg_foldl//4, dcg_foldl//5]).
+:- module('$utils', [op(700, xfy, :==), fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3, dcg_foldl//4, dcg_foldl//5]).
 
 
 fail(S, A) :- string_concat(S,"~n",SS), format(SS, A), fail.
@@ -52,3 +52,7 @@ dcg_foldl(Clause, V1, [H1|T1], [H2|T2], V2) -->
     { Run =.. [Clause, V1, H1, H2, V3] },
     Run,
     dcg_foldl(Clause, V3, T1, T2, V2).
+
+:- multifile user:term_expansion/2.
+user:term_expansion(Head :== Exp, Head := V :- V is Exp).
+user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).

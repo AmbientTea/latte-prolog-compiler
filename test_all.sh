@@ -4,7 +4,9 @@ if [ "$1" == "" ] || [ $1 == "interpreter" ]; then
     echo ==========good============
     for file in `ls good/*.lat`; do
         out=good/`basename $file .lat`.output
-	    echo $file ... `./latc.pl -m eval $file | diff -q - $out`
+        O=`./latc.pl -m eval $file | diff -q - $out`
+        if [ $? != 0 ]; then exit; fi
+	    echo $file ... $O
     done;
 elif [ "$1" == "frontend" ]; then
     echo ==========bad=============

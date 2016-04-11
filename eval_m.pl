@@ -45,18 +45,16 @@ M.eval_exp(app(Fun, ArgExps)) := M.new().eval_function(Fun, ArgVals).get_return(
     ArgVals = M.eval_exps(ArgExps).
 
 
-M.eval_exp(E1 + E2) := V :- 
-    V1 = M.eval_exp(E1),
-    V2 = M.eval_exp(E2),
-    V is V1 + V2.
+M.eval_exp(E1 + E2) :== M.eval_exp(E1) + M.eval_exp(E2).
 M.eval_exp('++'(E1,E2)) := V :-
     V1 = M.eval_exp(E1),
     V2 = M.eval_exp(E2),
-    string_concat(V1, V2, V). 
-M.eval_exp(E1 - E2) := V :- V is M.eval_exp(E1) - M.eval_exp(E2).
-M.eval_exp(E1 * E2) := V :- V is M.eval_exp(E1) * M.eval_exp(E2).
-M.eval_exp(E1 / E2) := V :- V is M.eval_exp(E1) div M.eval_exp(E2).
-M.eval_exp('%'(E1,E2)) := V :- V is M.eval_exp(E1) mod M.eval_exp(E2).
+    string_concat(V1, V2, V).
+
+M.eval_exp(E1 - E2) :== M.eval_exp(E1) - M.eval_exp(E2).
+M.eval_exp(E1 * E2) :== M.eval_exp(E1) * M.eval_exp(E2).
+M.eval_exp(E1 / E2) :== M.eval_exp(E1) div M.eval_exp(E2).
+M.eval_exp('%'(E1,E2)) :== M.eval_exp(E1) mod M.eval_exp(E2).
 
 M.eval_exp(E1 < E2) := V :- M.eval_exp(E1) < M.eval_exp(E2) -> V = true ; V = false.
 M.eval_exp(E1 > E2) := V :- M.eval_exp(E1) =< M.eval_exp(E2) -> V = false ; V = true.

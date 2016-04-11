@@ -104,7 +104,7 @@ ir_exp(Env, true, 1, Env) --> !, [].
 ir_exp(Env, str(Str1), V, NewEnv) -->
     [ V = strcast(Len, StrLab) ],
     { string_length(Str1, Len1), Len is Len1 + 1,
-      string_concat(Str1, "\0", Str),
+      string_concat(Str1, "\\00", Str),
       NewEnv = Env.add_string(Str, StrLab, Len) }.
 
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
@@ -130,7 +130,7 @@ ir_exp(Env, E, V, NewEnv) -->
     [V = VV].
 
 ir_exp(Env, Exp, V, NewEnv) -->
-    ir_cond(Env, not(Exp), True, False, NewEnv),
+    ir_cond(Env, Exp, True, False, NewEnv),
     
     [ block(True),
       jump(End) ],
