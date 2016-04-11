@@ -1,8 +1,9 @@
-:- module(statement, [stmt_monad/4]).
+:- module(statement, [stmt_monad/4, correct//2]).
 
 :- use_module(utils).
 :- use_module(environment).
 :- use_module(expression).
+:- use_module(library(dcg/basics)).
 
 stmt_monad(Fun, Env, RetType, statement{
     function_name: Fun,
@@ -11,72 +12,148 @@ stmt_monad(Fun, Env, RetType, statement{
     returned: false
 }).
 
-M.corrects([], []) := M.
-M.corrects([H|T], [NH|NT]) := M.correct(H, NH).corrects(T, NT).
-
 M.epush() := M.put(env, M.env.push()).
 M.epop()  := M.put(env, M.env.pop()).
 
-M.well_typed(Exp, NExp) := M :- types(M.env, Exp, _, NExp).
-M.well_typed(Exp, Type, NExp) := M :- types(M.env, Exp, Type, NExp).
-M.expect_type(Type, Exp, NExp) := M :- expect_type(M.env, Exp, Type, NExp). 
 
-M.merge_return(M1,M2) := M.put(returned, Ret) :-
-    M1.returned = true, M2.returned = true -> Ret = true ; Ret = false.
+corrects([], []) --> [].
+corrects([H|T], [NH|NT]) --> correct(H, NH), corrects(T, NT).
+
+
+well_typed(Exp, NExp) --> well_typed(Exp, _, NExp).
+
+well_typed(Exp, Type, NExp) -->
+    get_state(S),
+    { types(S.env, Exp, Type, NExp) }.
+
+expect_type(Type, Exp, NExp) -->
+    get_state(S),
+    { expect_type(S.env, Exp, Type, NExp) }.
+
+merge_return(S1,S2), [NS] --> [S],
+    { S1.returned = true, S2.returned = true -> Ret = true ; Ret = false },
+    { NS = S.put(returned, Ret) }.
 
 %%% SIMPLE STATEMENTS %%%
 
-M.correct(skip, skip) := M.
-M.correct(return, return) := M.put(returned, true) :-
-    M.return_type = void -> true
-    ; fail("void return when ~w expected", [M.return_type]).
-
-M.correct(return(Exp), return(NExp)) := M.put(returned, true) :-
-    types(M.env, Exp, Type, NExp),
-    ( M.return_type = Type -> true
-    ; fail("return of type ~w expected but expression ~w of type ~w found", [M.return_type, Exp, Type]) ).
+correct(skip, skip) --> [].
+correct(return, return) -->
+    get_state(S),
+    ({ S.return_type = void } ->
+        put_state(S.put(returned, true))
+    ; { fail("void return when ~w expected", [S.return_type]) })
+    .
     
-M.correct(expstmt(Exp), expstmt(NExp)) := M.well_typed(Exp, _, NExp).
+correct(return(Exp), return(NExp)) -->
+    get_state(S),
+    well_typed(Exp, Type, NExp),
+    ( { S.return_type = Type } ->
+        put_state(S.put(returned, true))
+    ; { fail("return of type ~w expected but expression ~w of type ~w found", [S.return_type, Exp, Type]) }).
 
-M.correct(incr(Id), incr(Id)) := M :-
-    M.env.get_var(Id).type = int -> true
-    ; fail("cannot increment non-integer variable ~w", [Id]).
-M.correct(decr(Id), decr(Id)) := M :-
-    M.env.get_var(Id).type = int -> true
-    ; fail("cannot decrement non-integer variable ~w", [Id]).
+correct(expstmt(Exp), expstmt(NExp)) --> well_typed(Exp, NExp).
 
-M.correct(Id = Exp, Id = NExp) := M.expect_type(VarInfo.type, Exp, NExp) :-
-    ( VarInfo = M.env.get_var(Id) -> true ; fail("variable ~w not declared", [Id]) ). 
+correct(incr(Id), incr(Id)) -->
+    get_state(S),
+    ( {S.env.get_var(Id).type = int} ->
+        put_state(S)
+    ; { fail("cannot increment non-integer variable ~w", [Id]) }).
+
+correct(decr(Id), decr(Id)) -->
+    get_state(S),
+    ( {S.env.get_var(Id).type = int} ->
+        put_state(S)
+    ; { fail("cannot decrement non-integer variable ~w", [Id]) }).
+    
+correct(Id = Exp, Id = NExp) -->
+    get_state(S),
+    ( {VarInfo = S.env.get_var(Id)} ->
+        expect_type(VarInfo.type, Exp, NExp)
+    ; {fail("variable ~w not declared", [Id])} ).
+
 
 %%% CONTROL STRUCTURES %%%
+correct(block(Stmts), block(NStmts)) -->
+    do_state(epush()),
+    corrects(Stmts, NStmts),
+    do_state(epop()).
+% M.correct(block(Stmts), block(NStmts)) := M.epush().corrects(Stmts, NStmts).epop().
 
-M.correct(block(Stmts), block(NStmts)) := M.epush().corrects(Stmts, NStmts).epop().
 
-M.correct(while(true, Do), while(true, NDo)) := M.epush().correct(Do, NDo).epop() :- !.
-M.correct(while(While, Do), while(NWhile,NDo)) :=
-    M.expect_type(boolean, While, NWhile).epush().correct(Do, NDo).epop().put(returned, M.returned).
+correct(if(If, Then), NIf) --> correct(if(If, Then, skip), NIf).
 
-M.correct(if(true, Then, Else), NThen) := M.epush().correct(Then, NThen).epop() :- !, M.epush() ? correct(Else, _).
-M.correct(if(false, Then, Else), NElse) := M.epush().correct(Else, NElse).epop() :- !, M.epush() ? correct(Then, _).
-M.correct(if(If, Then, Else), if(NIf, NThen, NElse)) := M.expect_type(boolean, If, NIf).merge_return(
-    M.epush().correct(Then, NThen).epop(),
-    M.epush().correct(Else, NElse).epop()).
+correct(if(true, Then, Else), NThen) -->
+    do_state(epush()),
+    correct(Else, _),
+    correct(Then, NThen),
+    do_state(epop()).
 
-M.correct(if(If, Then), NIf) := M.correct(if(If, Then, skip), NIf).
+correct(if(false, Then, Else), NElse) -->
+    do_state(epush()),
+    correct(Then, _),
+    correct(Else, NElse),
+    do_state(epop()).
+
+correct(if(If, Then, Else), if(NIf, NThen, NElse)) -->
+    expect_type(boolean, If, NIf),
+    do_state(epush()),
+    get_state(S),
+    
+    correct(Then, NThen),
+    do_state(epop()),
+    get_state(S1),
+    
+    put_state(S),
+    correct(Else, NElse),
+    do_state(epop()),
+    get_state(S2),
+    
+    merge_return(S1, S2).
+
+correct(while(true, Do), while(true, NDo)) -->
+    do_state(epush()),
+    correct(Do, NDo),
+    do_state(epop()).
+
+correct(while(While, Do), while(NWhile,NDo)) -->
+    expect_type(boolean, While, NWhile),
+    do_state(epush()),
+    correct(Do, NDo),
+    get_state(S),
+    do_state(epop()),
+    do_state(put(returned, S.returned)).
+
 
 %%% DECLARATIONS %%%
+correct(decl(Type, Decls), decl(Type, NDecls)) -->
+    decls_correct(Type, Decls, NDecls).
 
-M.correct(decl(Type, Decls), decl(Type, NDecls)) := M.decls_correct(Type, Decls, NDecls).
+decls_correct(_, [], []) --> [].
+decls_correct(Type, [H|T], [NH|NT]) -->
+    decl_correct(Type, H, NH),
+    decls_correct(Type, T, NT).
 
-M.decls_correct(_, [], []) := M.
-M.decls_correct(Type, [H|T], [NH|NT]) := M.decl_correct(Type, H, NH).decls_correct(Type, T, NT).
+decl_correct(Type, init(Id, Exp), init(Id, NExp)) -->
+    expect_type(Type, Exp, NExp),
+    decl_correct(Type, noinit(Id), _).
 
-M.decl_correct(Type, init(Id, Exp), init(Id, NExp)) := M.expect_type(Type, Exp, NExp).decl_correct(Type, noinit(Id), _).
-M.decl_correct(Type, noinit(Id), init(Id, V)) := M.put(env, M.env.add_var(Id, Type)) :-
-    (can_shadow(M.env, Id) -> true ; fail("variable ~w already declared", [Id])),
-    ( Type = int -> V = int(0)
+decl_correct(Type, noinit(Id), init(Id, V)) -->
+    get_state(S),
+    { can_shadow(S.env, Id) -> true ; fail("variable ~w already declared", [Id]) },
+    { Type = int -> V = int(0)
     ; Type = boolean -> V = false
-    ; Type = string -> V = str("")).
+    ; Type = string -> V = str("") },
+    put_state(S.put(env, S.env.add_var(Id, Type))).
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -26,7 +26,7 @@ correct_function(Env0, topdef(Return, Fun, Args, Body), topdef(Return, Fun, Args
     % writeln(checking: Fun : Args),
     declare_args(Env0.push(), Args, Env1),
     stmt_monad(Fun, Env1, Return, Mon),
-    EEnv = Mon.correct(block(Body), block(NBody)),
-    ((EEnv.returned = false, Return \= void) ->
+    correct(block(Body), block(NBody), [Mon], [Mon2]),
+    ((Mon2.returned = false, Return \= void) ->
         fail("control flow reaches function ~w end without return", [Fun])
     ; true).
