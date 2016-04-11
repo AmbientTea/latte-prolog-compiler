@@ -1,5 +1,21 @@
-:- module('$utils', [op(700, xfy, :==), op(600, xfy, ?), fail/1, fail/2, fst/2, snd/2, foldr/4, zip/3, dgc_map//2, separated//3, dcg_foldl//4, dcg_foldl//5, '?'/2]).
+:- module('$utils', [
+    op(700, xfy, :==),
+    op(600, xfy, ?),
+    fail/1, fail/2,
+    fst/2, snd/2,
+    foldr/4,
+    zip/3,
+    dgc_map//2,
+    separated//3,
+    dcg_foldl//4, dcg_foldl//5, '?'/2,
+    get_state//1, put_state//1, do_state//1
+]).
 
+
+get_state(S), [S] --> [S].
+put_state(S), [S] --> [_] ; [].
+
+do_state(F), [NS] --> [S], { NS = S.F }.
 
 fail(S, A) :- string_concat(S,"~n",SS), format(SS, A), fail.
 fail(S) :- fail(S, []).
