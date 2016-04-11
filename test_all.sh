@@ -6,7 +6,7 @@ if [ "$1" == "" ] || [ $1 == "interpreter" ]; then
         out=good/`basename $file .lat`.output
 	    echo $file ... `./latc.pl -m eval $file | diff -q - $out`
     done;
-
+elif [ "$1" == "frontend" ]; then
     echo ==========bad=============
     for file in `ls bad/*.lat`; do
 	    echo -n $file ... 
@@ -19,11 +19,4 @@ else
         if [ $? != 0 ]; then exit; fi
         echo compiled $file ... `$PROG | diff -q - $out`
     done;
-
-    echo ==========bad=============
-    for file in `ls bad/*.lat`; do
-	    echo -n $file ... 
-	    ./latc.pl $file
-    done;
-    
 fi;
