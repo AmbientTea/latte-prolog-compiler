@@ -17,16 +17,38 @@ declare_fun(Env, topdef(Return, Fun, Args, _), NEnv) :-
 
 %%%%%
 
-declare_args(Env, [], Env).
-declare_args(Env, [(Id,Type)|T], NEnv) :-
-    can_shadow(Env, Id) -> (NEnv0 = Env.add_var(Id,Type), declare_args(NEnv0, T, NEnv) )
-    ; fail("argument ~w declared multiple times", [Id]).
+declare_args([]) --> !.
+declare_args([(Id, Type) | T]) -->
+    get_state(Env),
+    { can_shadow(Env, Id) ->
+        NEnv = Env.add_var(Id,Type)
+    ; fail("argument ~w declared multiple times", [Id]) },
+    put_state(NEnv),
+    declare_args(T).
 
-correct_function(Env0, topdef(Return, Fun, Args, Body), topdef(Return, Fun, Args, NBody)) :- 
-    % writeln(checking: Fun : Args),
-    declare_args(Env0.push(), Args, Env1),
-    stmt_monad(Fun, Env1, Return, Mon),
-    correct(block(Body), block(NBody), [Mon], [Mon2]),
-    ((Mon2.returned = false, Return \= void) ->
+
+correct_function(Env, Top, NTop) :- phrase(correct_function(Top, NTop), [Env], _).
+correct_function(topdef(Return, Fun, Args, Body),
+                 topdef(Return, Fun, Args, NBody)) -->
+    do_state(push()),
+    declare_args(Args),
+    get_state(S1),
+    { stmt_monad(Fun, S1, Return, Mon) },
+    put_state(Mon),
+    !, correct(block(Body), block(NBody)), !,
+    get_state(Mon2),
+    { Mon2.returned = false, Return \= void ->
         fail("control flow reaches function ~w end without return", [Fun])
-    ; true).
+    ; true }.
+
+
+
+
+
+
+
+
+
+
+
+

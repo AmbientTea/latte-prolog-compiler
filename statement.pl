@@ -31,7 +31,7 @@ expect_type(Type, Exp, NExp) -->
     { expect_type(S.env, Exp, Type, NExp) }.
 
 merge_return(S1,S2), [NS] --> [S],
-    { S1.returned = true, S2.returned = true -> Ret = true ; Ret = false },
+    { (S1.returned = true, S2.returned = true) -> Ret = true ; Ret = false },
     { NS = S.put(returned, Ret) }.
 
 %%% SIMPLE STATEMENTS %%%
@@ -90,7 +90,9 @@ correct(if(true, Then, Else), NThen) -->
 
 correct(if(false, Then, Else), NElse) -->
     do_state(epush()),
+    get_state(S),
     correct(Then, _),
+    put_state(S),
     correct(Else, NElse),
     do_state(epop()).
 

@@ -77,6 +77,6 @@ expect_type(Env, Exp, Type, NExp) :- phrase(expect_type(Exp, Type, NExp), [Env],
 
 expect_type(Exp, Type, NExp) -->
     types(Exp, EType, NExp),
-    { Type = EType, ! -> true
+    { Type = EType -> true
     ; fail("expression ~w has type: ~w, expected: ~w", [Exp, EType, Type]) }.
 
