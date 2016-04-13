@@ -1,7 +1,8 @@
 :- module(environment, [emptyenv/1, push/2, pop/2, add_var/4, get_var/3, can_shadow/2]).
 
 emptyenv( environment{
-    return : void,
+    function_name: ...,
+    return_type : void,
     functions : functions{
         printInt : fun{ return: void, args: [int], extern: true },
         printString : fun{ return: void, args: [string], extern: true },

@@ -16,7 +16,7 @@ declare_fun(topdef(Return, Fun, Args, _)) -->
 %%%%%
 
 declare_args([]) --> !.
-declare_args([(Id, Type) | T]) -->
+declare_args([(Id, Type) | T]) -->  
     get_state(Env),
     { can_shadow(Env, Id) ->
         NEnv = Env.add_var(Id,Type)
@@ -27,14 +27,12 @@ declare_args([(Id, Type) | T]) -->
 correct_functions([], []) --> !.
 correct_functions([H|T], [HH|TT]) --> local(correct_function(H,HH), _), correct_functions(T, TT).
 
-%correct_function(Env, Top, NTop) :- phrase(correct_function(Top, NTop), [Env], _).
 correct_function(topdef(Return, Fun, Args, Body),
                  topdef(Return, Fun, Args, NBody)) -->
     do_state(push()),
     declare_args(Args),
-    get_state(S1),
-    { stmt_monad(Fun, S1, Return, Mon) },
-    put_state(Mon),
+    do_state(put(return_type, Return)),
+    do_state(put(function_name, Fun)),
     !, correct(block(Body), block(NBody)), !,
     get_state(Mon2), !,
     { Mon2.returned = false, Return \= void ->
