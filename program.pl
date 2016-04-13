@@ -1,19 +1,17 @@
-:- module(program, [correct_program/3]).
+:- module(program, [correct_program//2]).
 :- use_module(utils).
 :- use_module(environment).
 :- use_module(statement).
 
-arg_types([], []).
-arg_types([(_, Tp) | T], [Tp | TT]) :- arg_types(T, TT).
+correct_program(Program, NProgram) -->
+    { emptyenv(Env) }, put_state(Env),
+    dgc_map(declare_fun, Program), !,
+    correct_functions( Program, NProgram).
 
-correct_program(Program, Env, NProgram) :- 
-    emptyenv(EEnv),
-    foldr(declare_fun, EEnv, Program, Env),
-    maplist(correct_function(Env), Program, NProgram).
-
-declare_fun(Env, topdef(Return, Fun, Args, _), NEnv) :-
-    arg_types(Args, ArgTypes),
-    NEnv = Env.add_fun(Fun, Return, ArgTypes).
+declare_fun(topdef(Return, Fun, Args, _)) -->
+    get_state(Env),
+    { maplist(snd, Args, ArgTypes) },
+    put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
 %%%%%
 
@@ -26,8 +24,10 @@ declare_args([(Id, Type) | T]) -->
     put_state(NEnv),
     declare_args(T).
 
+correct_functions([], []) --> !.
+correct_functions([H|T], [HH|TT]) --> local(correct_function(H,HH), _), correct_functions(T, TT).
 
-correct_function(Env, Top, NTop) :- phrase(correct_function(Top, NTop), [Env], _).
+%correct_function(Env, Top, NTop) :- phrase(correct_function(Top, NTop), [Env], _).
 correct_function(topdef(Return, Fun, Args, Body),
                  topdef(Return, Fun, Args, NBody)) -->
     do_state(push()),
@@ -36,7 +36,7 @@ correct_function(topdef(Return, Fun, Args, Body),
     { stmt_monad(Fun, S1, Return, Mon) },
     put_state(Mon),
     !, correct(block(Body), block(NBody)), !,
-    get_state(Mon2),
+    get_state(Mon2), !,
     { Mon2.returned = false, Return \= void ->
         fail("control flow reaches function ~w end without return", [Fun])
     ; true }.

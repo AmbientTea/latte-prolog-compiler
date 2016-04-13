@@ -10,7 +10,7 @@ stripf(F, A) :- F =.. [_|Arg], A =.. [','|Arg].
 fundef( topdef(RetT, Id, Args, _), (RetT, Id, ArgTs) ) :- maplist(snd, Args, ArgTs).
 envFunInfo(_) :- false.
 
-check(program, Tree, Env, NTree) :- correct_program(Tree, Env, NTree).
+check(program, Tree, Env, NTree) :- correct_program(Tree, NTree, [], [Env]).
 check(stmt, Stmt, Env, NStmt) :-
     emptyenv(Env),
     stmt_monad(..., Env, void, M),

@@ -98,17 +98,11 @@ correct(if(false, Then, Else), NElse) -->
 
 correct(if(If, Then, Else), if(NIf, NThen, NElse)) -->
     expect_type(boolean, If, NIf),
+    
     do_state(epush()),
-    get_state(S),
-    
-    correct(Then, NThen),
+    local(correct(Then, NThen), S1),
+    local(correct(Else, NElse), S2),
     do_state(epop()),
-    get_state(S1),
-    
-    put_state(S),
-    correct(Else, NElse),
-    do_state(epop()),
-    get_state(S2),
     
     merge_return(S1, S2).
 

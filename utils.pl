@@ -5,10 +5,10 @@
     fst/2, snd/2,
     foldr/4,
     zip/3,
-    dgc_map//2,
+    dgc_map//2, dgc_map//3,
     separated//3,
     dcg_foldl//4, dcg_foldl//5, '?'/2,
-    get_state//1, put_state//1, do_state//1
+    get_state//1, put_state//1, do_state//1, local//2
 ]).
 
 
@@ -17,7 +17,10 @@ put_state(S), [S] --> [_] ; [].
 
 do_state(F), [NS] --> [S], { NS = S.F }.
 
-fail(S, A) :- string_concat(S,"~n",SS), format(SS, A), fail.
+:- module_transparent local//2.
+local(Instr, St) --> get_state(S), Instr, get_state(St), put_state(S).
+
+fail(S, A) :- string_concat(S,"~n",SS), format(user_error, SS, A), fail.
 fail(S) :- fail(S, []).
 
 fst((A,_), A).
@@ -50,11 +53,16 @@ separated(Sep, Clause, [H | T]) -->
     ClauseRun,
     ({T = []} -> [] ; Sep, separated(Sep, Clause, T)).
 
-:- module_transparent dgc_map//2.
+:- module_transparent dgc_map//2, dgc_map//3.
 dgc_map(_, []) --> [].
 dgc_map(Clause, [H|T]) -->
     { Clause =.. [Op | Args], append(Args, [H], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T).
 dgc_map(Clause, [H|T]) --> { Run =.. [Clause, H] }, Run, dgc_map(Clause, T).
+
+dgc_map(_, [], []) --> [].
+dgc_map(Clause, [H|T], [HH|TT]) -->
+    { Clause =.. [Op | Args], append(Args, [H, HH], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T, TT).
+dgc_map(Clause, [H|T], [HH|TT]) --> { Run =.. [Clause, H, HH] }, Run, dgc_map(Clause, T, TT).
 
 :- module_transparent dcg_foldl//4, dcg_foldl//5.
 dcg_foldl(_, V, [], V) --> [].
