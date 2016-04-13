@@ -1,7 +1,6 @@
 :- module(eval_m, [eval_m/1]).
 
 :- use_module(utils).
-:- use_module(eval_state).
 
 eval_m(eval_m{
     vars: [_{}],

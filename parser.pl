@@ -2,7 +2,12 @@
 :- use_module(library(dcg/basics)).
 
 parse( Type, File, Tree ) :-
-	phrase_from_file(tokenize(Tokens), File),
+    ( File = '-' ->
+        ( prompt(_, ''),
+          stream_property(user_input, reposition(true)),
+          phrase_from_stream(tokenize(Tokens), user_input)
+        ; fail("reading from stdin failed (note: lazy reading not yet supported"))
+	; phrase_from_file(tokenize(Tokens), File) ),
 	( Type = program, phrase(program(Tree), Tokens) ).
 
 %%%%%%%%%%%%%

@@ -14,4 +14,4 @@ eval_stmt(Stmt) :-
 eval_program(Prog) :-
     eval_m(EM),
     M = EM.load_program(Prog),
-    M ? eval_function(main, []).get_return().
+    M.eval_function(main, []) ? get_return().
