@@ -9,6 +9,8 @@
 corrects([], []) --> [].
 corrects([H|T], [NH|NT]) --> correct(H, NH), corrects(T, NT).
 
+can_shadow(Id) --> get_state(S), { S.stack = [H|_] -> \+ H ? get(Id) ; true }.
+
 well_typed(Exp, NExp) --> types(Exp, _, NExp).
 
 merge_return(S1,S2), [NS] --> [S],
@@ -19,38 +21,30 @@ merge_return(S1,S2), [NS] --> [S],
 
 correct(skip, skip) --> [].
 correct(return, return) -->
-    get_state(S),
-    ({ S.return_type = void } ->
-        put_state(S.put(returned, true))
-    ; { fail("void return when ~w expected", [S.return_type]) })
-    .
+    ask_state(return_type, void) ->
+        do_state(put(returned, true))
+    ; get_state(S), { fail("void return when ~w expected", [S.return_type]) }.
     
 correct(return(Exp), return(NExp)) -->
-    get_state(S),
     types(Exp, Type, NExp),
-    ( { S.return_type = Type } ->
-        put_state(S.put(returned, true))
-    ; { fail("return of type ~w expected but expression ~w of type ~w found", [S.return_type, Exp, Type]) }).
+    ( ask_state(return_type, Type) ->
+        do_state(put(returned, true))
+    ; get_state(S), { fail("return of type ~w expected but expression ~w of type ~w found", [S.return_type, Exp, Type]) }).
 
 correct(expstmt(Exp), expstmt(NExp)) --> well_typed(Exp, NExp).
 
 correct(incr(Id), incr(Id)) -->
-    get_state(S),
-    ( {S.get_var(Id).type = int} ->
-        put_state(S)
-    ; { fail("cannot increment non-integer variable ~w", [Id]) }).
+    ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
+    ; { fail("cannot increment non-integer variable ~w", [Id]) }.
 
 correct(decr(Id), decr(Id)) -->
-    get_state(S),
-    ( {S.get_var(Id).type = int} ->
-        put_state(S)
-    ; { fail("cannot decrement non-integer variable ~w", [Id]) }).
+    ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
+    ; { fail("cannot decrement non-integer variable ~w", [Id]) }.
     
 correct(Id = Exp, Id = NExp) -->
-    get_state(S),
-    ( {VarInfo = S.get_var(Id)} ->
+    ask_state(get_var(Id), VarInfo) ->
         expect_type(Exp, VarInfo.type, NExp)
-    ; {fail("variable ~w not declared", [Id])} ).
+    ; { fail("variable ~w not declared", [Id]) }.
 
 
 %%% CONTROL STRUCTURES %%%
@@ -113,12 +107,12 @@ decl_correct(Type, init(Id, Exp), init(Id, NExp)) -->
     decl_correct(Type, noinit(Id), _).
 
 decl_correct(Type, noinit(Id), init(Id, V)) -->
-    get_state(S),
-    { can_shadow(S, Id) -> true ; fail("variable ~w already declared", [Id]) },
-    { Type = int -> V = int(0)
-    ; Type = boolean -> V = false
-    ; Type = string -> V = str("") },
-    do_state(add_var(Id, Type)).
+    can_shadow(Id) ->
+        { Type = int -> V = int(0)
+        ; Type = boolean -> V = false
+        ; Type = string -> V = str("") },
+        do_state(add_var(Id, Type))
+    ; { fail("variable ~w already declared", [Id]) }.
 
 
 

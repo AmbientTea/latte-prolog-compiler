@@ -29,5 +29,7 @@ E.get_var(Id) := VarInfo :- member(Block, E.stack), VarInfo = Block.get(Id), !.
 
 can_shadow(Env, Id) :- Env.stack = [H|_] -> \+ H?get(Id) ; true.
 
+can_shadow(Env, Id) :- Env.stack = [H|_] -> \+ H?get(Id) ; true.
+
 E.merge(A, B) := E.put(returned, Ret) :-
     A.returned = true, B.returned = true -> Ret = true ; Ret = false.
