@@ -9,15 +9,7 @@
 corrects([], []) --> [].
 corrects([H|T], [NH|NT]) --> correct(H, NH), corrects(T, NT).
 
-well_typed(Exp, NExp) --> well_typed(Exp, _, NExp).
-
-well_typed(Exp, Type, NExp) -->
-    get_state(S),
-    { types(S, Exp, Type, NExp) }.
-
-expect_type(Type, Exp, NExp) -->
-    get_state(S),
-    { expect_type(S, Exp, Type, NExp) }.
+well_typed(Exp, NExp) --> types(Exp, _, NExp).
 
 merge_return(S1,S2), [NS] --> [S],
     { (S1.returned = true, S2.returned = true) -> Ret = true ; Ret = false },
@@ -35,7 +27,7 @@ correct(return, return) -->
     
 correct(return(Exp), return(NExp)) -->
     get_state(S),
-    well_typed(Exp, Type, NExp),
+    types(Exp, Type, NExp),
     ( { S.return_type = Type } ->
         put_state(S.put(returned, true))
     ; { fail("return of type ~w expected but expression ~w of type ~w found", [S.return_type, Exp, Type]) }).
@@ -57,7 +49,7 @@ correct(decr(Id), decr(Id)) -->
 correct(Id = Exp, Id = NExp) -->
     get_state(S),
     ( {VarInfo = S.get_var(Id)} ->
-        expect_type(VarInfo.type, Exp, NExp)
+        expect_type(Exp, VarInfo.type, NExp)
     ; {fail("variable ~w not declared", [Id])} ).
 
 
@@ -84,7 +76,7 @@ correct(if(false, Then, Else), NElse) -->
     do_state(pop()).
 
 correct(if(If, Then, Else), if(NIf, NThen, NElse)) -->
-    expect_type(boolean, If, NIf),
+    expect_type(If, boolean, NIf),
     
     do_state(push()),
     local(correct(Then, NThen), S1),
@@ -99,7 +91,7 @@ correct(while(true, Do), while(true, NDo)) -->
     do_state(pop()).
 
 correct(while(While, Do), while(NWhile,NDo)) -->
-    expect_type(boolean, While, NWhile),
+    expect_type(While, boolean, NWhile),
     do_state(push()),
     correct(Do, NDo),
     get_state(S),
@@ -117,7 +109,7 @@ decls_correct(Type, [H|T], [NH|NT]) -->
     decls_correct(Type, T, NT).
 
 decl_correct(Type, init(Id, Exp), init(Id, NExp)) -->
-    expect_type(Type, Exp, NExp),
+    expect_type(Exp, Type, NExp),
     decl_correct(Type, noinit(Id), _).
 
 decl_correct(Type, noinit(Id), init(Id, V)) -->

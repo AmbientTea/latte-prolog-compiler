@@ -1,4 +1,4 @@
-:- module(expression, [types/4, expect_type/4, types//3]).
+:- module(expression, [types//3, expect_type//3, types//3]).
 :- use_module(utils).
 :- use_module(environment).
 
