@@ -13,10 +13,9 @@ types(false, boolean, false) --> !.
 
 %%% VARIABLES %%%
 types( var(V), Type, var(V) ) -->
-    get_state(Env),
-    { VarInfo = Env.get_var(V) ->
-        Type = VarInfo.type
-    ; fail("variable ~w not declared~nin env: ~w", [V, Env]) }.
+    ask_state(get_var(V), VarInfo) ->
+        { Type = VarInfo.type }
+    ; { fail("variable ~w not declared", [V]) }.
 
 %%% OPERATORS %%%
 
@@ -53,18 +52,14 @@ types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_ty
 %%% FUNCTIONS %%%
 
 types(app(Fun, Args), Type, app(Fun, NArgs)) -->
-    get_state(Env),
-    { FunInfo = Env.functions.get(Fun) -> true ; fail("function ~w does not exist", [Fun]) },
-    { Type = FunInfo.return },
+    ask_state(functions, FunsInfo),
+    { FunInfo = FunsInfo.get(Fun), ! ; fail("function ~w does not exist", [Fun]) },
     all_type(Args, ArgTypes, NArgs),
-    { ArgTypes = FunInfo.args -> true
+    { Type = FunInfo.return },
+    { ArgTypes = FunInfo.args, !
     ; fail("function ~w takes arguments of types ~w, but got ~w", [Fun, FunInfo.args, ArgTypes]) }.
 
 % types(Env, Exp, T) :- var(T), fail("cannot type expression: ~w~nin env: ~w", [Exp, Env]).
-
-types(Env, Exp, Type, NExp ) :-
-    phrase(types(Exp, Type, NExp), [Env], [_]), !.
-
 
 %%%%%%%%%%%%%%%
 %%% HELPERS %%%
@@ -72,8 +67,6 @@ types(Env, Exp, Type, NExp ) :-
 
 all_type([], [], []) --> [].
 all_type([H|T], [HT|TT], [NH|NT]) --> types(H, HT, NH), all_type(T, TT, NT).
-
-expect_type(Env, Exp, Type, NExp) :- phrase(expect_type(Exp, Type, NExp), [Env], _).
 
 expect_type(Exp, Type, NExp) -->
     types(Exp, EType, NExp),
