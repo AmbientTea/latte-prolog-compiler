@@ -8,7 +8,8 @@
     dgc_map//2, dgc_map//3,
     separated//3,
     dcg_foldl//4, dcg_foldl//5, '?'/2,
-    get_state//1, put_state//1, do_state//1, ask_state//2, local//2
+    get_state//1, put_state//1, do_state//1, ask_state//2,
+    local//2, local//1, op(600, fx, local)
 ]).
 
 
@@ -19,7 +20,8 @@ do_state(F), [NS] --> [S], { NS = S.F }.
 
 ask_state(A, V) --> get_state(S), { V = S.A }.
 
-:- module_transparent local//2.
+:- module_transparent 'local'//1, 'local'//2.
+local(Instr) --> get_state(S), Instr, put_state(S).
 local(Instr, St) --> get_state(S), Instr, get_state(St), put_state(S).
 
 fail(S, A) :- string_concat(S,"~n",SS), format(user_error, SS, A), fail.

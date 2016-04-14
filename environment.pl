@@ -1,4 +1,10 @@
-:- module(environment, [emptyenv/1, push/2, pop/2, add_var/4, get_var/3, can_shadow/2]).
+:- module(environment, [
+    emptyenv/1,
+    push/2, pop/2,
+    add_var/4, get_var/3,
+    can_shadow//1,
+    op(600, fx, pushed), pushed//1
+]).
 
 emptyenv( environment{
     function_name: ...,
@@ -27,9 +33,11 @@ M.add_var(Id, Type) := M.put(stack, Stack) :-
 
 E.get_var(Id) := VarInfo :- member(Block, E.stack), VarInfo = Block.get(Id), !.
 
-can_shadow(Env, Id) :- Env.stack = [H|_] -> \+ H?get(Id) ; true.
-
-can_shadow(Env, Id) :- Env.stack = [H|_] -> \+ H?get(Id) ; true.
+can_shadow(Id) --> get_state(S), { S.stack = [H|_] -> \+ H ? get(Id) ; true }.
 
 E.merge(A, B) := E.put(returned, Ret) :-
     A.returned = true, B.returned = true -> Ret = true ; Ret = false.
+
+
+:- module_transparent 'pushed'//1.
+pushed(I) --> do_state(push()), I, do_state(pop()).

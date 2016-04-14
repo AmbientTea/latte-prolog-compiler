@@ -32,19 +32,13 @@ token(T) --> id(Id), { keywords(KS), (member(Id, KS) -> T = Id ; T = id(Id))}.
 
 
 % comments
-tokenize(Tok) --> "/*", !, comment1end, tokenize(Tok).
-tokenize(Tok) --> "//", !, comment2end, tokenize(Tok).
-tokenize(Tok) --> "#", !, comment2end, tokenize(Tok).
+tokenize(Tok) --> "/*", !, string(_), "*/", !, tokenize(Tok).
+tokenize(Tok) --> "//", !, string(_), "\n", !, tokenize(Tok).
+tokenize(Tok) --> "#", !, string(_), "\n", !, tokenize(Tok).
 
 tokenize(X) --> blank, !, tokenize(X).
 tokenize([Tok | Tail]) --> token(Tok), !, tokenize(Tail).
 tokenize([]) --> [], !.
-
-comment1end --> "*/", !.
-comment1end --> [_], comment1end.
-
-comment2end --> "\n", !.
-comment2end --> [_], comment2end.
 
 %%%%%%%%%%%%%%
 %%% PARSER %%%
