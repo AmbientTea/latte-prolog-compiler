@@ -1,27 +1,28 @@
-:- module(peephole, [peephole//1]).
+:- module(peephole, [peephole//2]).
 
-peephole([]) --> [].
+:- use_module(library(dialect/hprolog)).
 
+:- use_module(common).
 
-peephole([ V = E | T]) -->
-    { E =.. [Op, V1, V2], member(Op, [+,-,*]), integer(V1), integer(V2), V is E }, peephole(T).
-% TODO: other operators
+peephole(BlockInfo, [ V = E | T]) -->
+    { E =.. [Op, V1, V2], member(Op, [+,-,*]),
+      integer(V1), integer(V2), V is E },
+    peephole(BlockInfo, T).
 
-
-
-
-peephole([ V = E | T]) -->
-    { E =.. [Op, V1, V2], member(Op, [<,>,==,'!=','<=','>=']), integer(V1), integer(V2) },
+peephole(BlockInfo, [ V = E | T]) -->
+    { E =.. [Op, V1, V2], member(Op, [<,>,'!=','<=','>=']), integer(V1), integer(V2) },
     { E -> V = 1 ; V = 0 },
-    peephole(T).
+    peephole(BlockInfo, T).
 
-% peephole([block(B1), jmp(B2) | T]) --> { B1 = B2 }, peephole(T).
+peephole(BlockInfo, [V = '=='(_Type, V1, V2) | T]) -->
+    { V1 == V2 -> V = 1 ; integer(V1), integer(V2), V1 \== V2, V = 0 },
+    peephole(BlockInfo, T).
 
-peephole([block(B1), block(B2) | T]) --> { B1 = B2 }, [ block(B1) ], peephole(T).
+peephole(BlockInfo, [ V = phi(_, [(V1, Lab1), (V2, Lab2)]) | T ]) -->
+    { Block = BlockInfo.block, Targets = BlockInfo.jumps },
+    { \+ memberchk_eq(Lab1 -> Block, Targets) -> V = V2
+    ; \+ memberchk_eq(Lab2 -> Block, Targets) -> V = V1 },
+    peephole(BlockInfo, T).
 
-peephole([if(1, Bl, _) | T]) --> [jmp(Bl)], peephole(T).
-peephole([if(0, _, Bl) | T]) --> [jmp(Bl)], peephole(T).
-
-
-
-peephole([H|T]) --> [H], peephole(T).
+peephole(BlockInfo, [H|T]) --> [H], peephole(BlockInfo, T).
+peephole(_BlockInfo, []) --> [].

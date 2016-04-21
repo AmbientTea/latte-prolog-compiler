@@ -34,6 +34,13 @@
 		  , longflags(['out'])
 		  , help(['output file (compilation only)'])
 		  ]
+		, [ opt(optimize)
+		  , type(atom)
+		  , default(true)
+		  , shortflags(['O'])
+		  , longflags(['optimize'])
+		  , help(['optimize: true, false'])
+		  ]
     	],
 	current_prolog_flag(argv, LineArgs),
 	opt_parse(OptSpec, LineArgs, Opts, Args),
@@ -51,7 +58,7 @@
 	    ; Cont = stmt -> eval_stmt(NTree)
 	    ; Cont = program -> eval_program(NTree) )
     ; Mode = compile ->
-        ( compile(Env, NTree, Code),
+        ( compile(Opts, Env, NTree, Code),
             writeln(Code)
         ; fail("compilation error or some features not implemented yet"))
     ; fail("invalid mode: ~w", [Mode])),

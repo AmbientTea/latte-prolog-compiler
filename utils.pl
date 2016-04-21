@@ -8,7 +8,9 @@
     dgc_map//2, dgc_map//3,
     separated//3,
     dcg_foldl//4, dcg_foldl//5, '?'/2,
-    get_state//1, put_state//1, do_state//1, ask_state//2,
+    get_state//1, put_state//1,
+    do_state//1, op(600, fx, do_state),
+    ask_state//2,
     local//2, local//1, op(600, fx, local)
 ]).
 
@@ -16,7 +18,7 @@
 get_state(S), [S] --> [S].
 put_state(S), [S] --> [_] ; [].
 
-do_state(F), [NS] --> [S], { NS = S.F }.
+do_state F, [NS] --> [S], { NS = S.F }.
 
 ask_state(A, V) --> get_state(S), { V = S.A }.
 

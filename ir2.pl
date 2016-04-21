@@ -11,7 +11,7 @@ ir_env(Type, Funs, ir2{
     ask: _{},
     create: _{},
     mod: _{},
-    last_block: 0,
+    last_block: ...,
     return_type: Type,
     var_types: _{},
     funs: Funs,
@@ -264,10 +264,10 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
     {
         ir_env(Ret, InEnv.functions, Env),
         ir_args(Args, Mod, NArgs),
-        phrase(ir_stmts(Env.add_mod_set(Mod), Body, FunEnv), Code1)
+        phrase(ir_stmts(Env.add_mod_set(Mod).put(last_block,StartBlock), Body, FunEnv), Code1)
     },
     dgc_map(ir_str_decl, FunEnv.strings),
-    { prefix(Code1, Code),
+    { prefix([block(StartBlock) | Code1], Code),
       (Ret \= void ->
       append(_, [unreachable], Code)
     ; append(_, [ret, unreachable], Code))

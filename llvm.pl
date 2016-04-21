@@ -19,7 +19,7 @@ inst_topdef(string(_, Lab, _), C, C1) :- atomic_concat('@str', C, Lab), C1 is C+
 
 inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_arg, Args, 1, _),
-    foldl(inst_instr, Body, (1,1), _).
+    foldl(inst_instr, Body, (0,1), _).
 
 inst_topdef(decl(_, _, _), C, C).
 inst_topdef(string(_, _, _), C, C).
