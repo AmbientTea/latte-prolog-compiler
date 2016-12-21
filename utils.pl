@@ -73,13 +73,17 @@ dgc_map(Clause, [H|T], [HH|TT]) --> { Run =.. [Clause, H, HH] }, Run, dgc_map(Cl
 :- module_transparent dcg_foldl//4, dcg_foldl//5.
 dcg_foldl(_, V, [], V) --> [].
 dcg_foldl(Clause, V1, [H|T], V2) -->
-    { Run =.. [Clause, V1, H, V3] },
+    { Clause =.. DstrClause,
+      append(DstrClause, [V1, H, V3], NewClause),
+      Run =.. NewClause },
     Run,
     dcg_foldl(Clause, V3, T, V2).
 
 dcg_foldl(_, V, [], [], V) --> [].
 dcg_foldl(Clause, V1, [H1|T1], [H2|T2], V2) -->
-    { Run =.. [Clause, V1, H1, H2, V3] },
+    { Clause =.. DstrClause,
+      append(DstrClause, [V1, H1, H2, V3], NewClause),
+      Run =.. NewClause },
     Run,
     dcg_foldl(Clause, V3, T1, T2, V2).
 

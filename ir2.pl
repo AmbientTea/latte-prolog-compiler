@@ -6,16 +6,12 @@
 :- op(600, xfy, '&&').
 :- op(600, xfy, '||').
 
-
-ir_env(Type, Funs, Strings, ir2{
+ir_env(ir2{
     ask: _{},
     create: _{},
     mod: _{},
     last_block: ...,
-    return_type: Type,
-    var_types: _{},
-    funs: Funs,
-    strings: Strings
+    var_types: _{}
 }).
 
 E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
@@ -91,40 +87,40 @@ ir_merge_if_mods(PreEnv, Label1, _{}, Label2, Mod2, NewEnv) -->
 %%% EXPRESSIONS %%%
 %%%%%%%%%%%%%%%%%%%
 
-ir_exps(Env, L, LL, NewEnv) --> dcg_foldl(ir_exp, Env, L, LL, NewEnv).
+ir_exps(ConstEnv, Env, L, LL, NewEnv) --> dcg_foldl(ir_exp(ConstEnv), Env, L, LL, NewEnv).
 
-ir_exp(Env, int(I), I, Env) --> !, [].
-ir_exp(Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
-ir_exp(Env, false, 0, Env) --> !, [].
-ir_exp(Env, true, 1, Env) --> !, [].
-ir_exp(Env, str(Str), V, Env) -->
-    { member(Str - StrLab - Len, Env.strings) },
+ir_exp(_ConstEnv, Env, int(I), I, Env) --> !, [].
+ir_exp(_ConstEnv, Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
+ir_exp(_ConstEnv, Env, false, 0, Env) --> !, [].
+ir_exp(_ConstEnv, Env, true, 1, Env) --> !, [].
+ir_exp(ConstEnv, Env, str(Str), V, Env) -->
+    { member(Str - StrLab - Len, ConstEnv.strings) },
     [ V = strcast(Len, StrLab) ].
 
-ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
-    ir_exps(Env, ArgExps, ArgVals, NewEnv),
-    { zip(ArgVals, Env.funs.Fun.args, Args) },
-    {Type = Env.funs.Fun.return},
+ir_exp(ConstEnv, Env, app(Fun, ArgExps), V, NewEnv) -->
+    ir_exps(ConstEnv, Env, ArgExps, ArgVals, NewEnv),
+    { zip(ArgVals, ConstEnv.functions.Fun.args, Args) },
+    {Type = ConstEnv.functions.Fun.return},
     ({ Type = void } ->
       [ call(Fun, Args) ]
     ; [ V = call(Type, Fun, Args) ]).
 
-ir_exp(Env, E1 ++ E2, V, NewEnv) --> ir_exp(Env, app(concat, [E1, E2]), V, NewEnv).
+ir_exp(ConstEnv, Env, E1 ++ E2, V, NewEnv) --> ir_exp(ConstEnv, Env, app(concat, [E1, E2]), V, NewEnv).
 
-ir_exp(Env, E, V, NewEnv) -->
+ir_exp(ConstEnv, Env, E, V, NewEnv) -->
     { E =.. [Op, Type, E1, E2], member(Op, ['!=', '==']), VV =.. [Op, Type, V1, V2] }, !,
-    ir_exp(Env, E1, V1, Env1),
-    ir_exp(Env1, E2, V2, NewEnv),
+    ir_exp(ConstEnv, Env, E1, V1, Env1),
+    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
     [V = VV], !.
 
-ir_exp(Env, E, V, NewEnv) -->
+ir_exp(ConstEnv, Env, E, V, NewEnv) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=']), VV =.. [Op, V1, V2] }, !,
-    ir_exp(Env, E1, V1, Env1),
-    ir_exp(Env1, E2, V2, NewEnv),
+    ir_exp(ConstEnv, Env, E1, V1, Env1),
+    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
     [V = VV].
 
-ir_exp(Env, Exp, V, NewEnv) -->
-    ir_cond(Env, Exp, True, False, NewEnv),
+ir_exp(ConstEnv, Env, Exp, V, NewEnv) -->
+    ir_cond(ConstEnv, Env, Exp, True, False, NewEnv),
     
     [ block(True),
       jump(End) ],
@@ -134,114 +130,111 @@ ir_exp(Env, Exp, V, NewEnv) -->
     
     [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
     
-ir_exp(_, E, _, _) --> { writeln(fail:E), halt }.
+ir_exp(_,_, E, _, _) --> { writeln(fail:E), halt }.
 
-ir_cond(Env, not(Exp), LabTrue, LabFalse, NewEnv) -->
-    ir_cond(Env, Exp, LabFalse, LabTrue, NewEnv).
+ir_cond(ConstEnv, Env, not(Exp), LabTrue, LabFalse, NewEnv) -->
+    ir_cond(ConstEnv, Env, Exp, LabFalse, LabTrue, NewEnv).
 
-ir_cond(Env, E1 && E2, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(Env, E1, V1, Env1),
+ir_cond(ConstEnv, Env, E1 && E2, LabTrue, LabFalse, NewEnv) -->
+    ir_exp(ConstEnv, Env, E1, V1, Env1),
     [ if(V1, Second, LabFalse) ],
     
     [ block(Second) ],
-    ir_exp(Env1, E2, V2, NewEnv),
+    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
     [ if(V2, LabTrue, LabFalse) ].
 
-ir_cond(Env, E1 '||' E2, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(Env, E1, V1, Env1),
+ir_cond(ConstEnv, Env, E1 '||' E2, LabTrue, LabFalse, NewEnv) -->
+    ir_exp(ConstEnv, Env, E1, V1, Env1),
     [ if(V1, LabTrue, Second) ],
     
     [ block(Second) ],
-    ir_exp(Env1, E2, V2, NewEnv),
+    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
     [ if(V2, LabTrue, LabFalse) ].
 
-ir_cond(Env, Exp, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(Env, Exp, V, NewEnv),
+ir_cond(ConstEnv, Env, Exp, LabTrue, LabFalse, NewEnv) -->
+    ir_exp(ConstEnv, Env, Exp, V, NewEnv),
     [ if(V, LabTrue, LabFalse) ].
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
 
-ir_stmts(Env, Stmts, NewEnv) --> dcg_foldl(ir_stmt, Env, Stmts, NewEnv).
+ir_stmts(ConstEnv, Env, Stmts, NewEnv) --> dcg_foldl(ir_stmt(ConstEnv), Env, Stmts, NewEnv).
 
-% ir_stmt( InEnv, Statement, OutEnv )
-% ir_stmt(_, S, _) --> { writeln(S), fail }.
+ir_stmt(_ConstEnv, Env, skip, Env) --> [].
 
-ir_stmt(Env, skip, Env) --> [].
-
-ir_stmt(InEnv, block(Stmts), NewEnv) -->
+ir_stmt(ConstEnv, InEnv, block(Stmts), NewEnv) -->
     { TempEnv = InEnv.reset() },
-    ir_stmts(TempEnv, Stmts, OutEnv),
+    ir_stmts(ConstEnv, TempEnv, Stmts, OutEnv),
     { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block) }.
 
-ir_stmt(InEnv, Id = Exp, OutEnv) -->
-    ir_exp(InEnv, Exp, V, ExpEnv),
+ir_stmt(ConstEnv, InEnv, Id = Exp, OutEnv) -->
+    ir_exp(ConstEnv, InEnv, Exp, V, ExpEnv),
     { OutEnv = ExpEnv.add_mod(Id, V) }.
 
-ir_stmt(Env, return, Env) --> [ret].
-ir_stmt(Env, return(Exp), NewEnv) -->
-    ir_exp(Env, Exp, V, NewEnv),
-    [ret(Env.return_type, V)].
+ir_stmt(_ConstEnv, Env, return, Env) --> [ret].
+ir_stmt(ConstEnv, Env, return(Exp), NewEnv) -->
+    ir_exp(ConstEnv, Env, Exp, V, NewEnv),
+    [ret(ConstEnv.return_type, V)].
 
-ir_stmt(InEnv, incr(Id), OutEnv) --> ir_stmt(InEnv, Id = var(Id) + int(1), OutEnv).
-ir_stmt(InEnv, decr(Id), OutEnv) --> ir_stmt(InEnv, Id = var(Id) - int(1), OutEnv).
+ir_stmt(ConstEnv, InEnv, incr(Id), OutEnv) --> ir_stmt(ConstEnv, InEnv, Id = var(Id) + int(1), OutEnv).
+ir_stmt(ConstEnv, InEnv, decr(Id), OutEnv) --> ir_stmt(ConstEnv, InEnv, Id = var(Id) - int(1), OutEnv).
 
 
-ir_stmt(Env, decl(_, []), Env) --> [].
-ir_stmt(Env, decl(Type, [ noinit(Id) | T ]), NewEnv) -->
+ir_stmt(_ConstEnv, Env, decl(_, []), Env) --> [].
+ir_stmt(ConstEnv, Env, decl(Type, [ noinit(Id) | T ]), NewEnv) -->
     { Type = int -> Def = 0
     ; Type = boolean -> Def = 0
     ; Type = string -> Def = "" },
-    ir_stmt(Env.add_var(Id, Type).add_create(Id, Def), decl(Type,T), NewEnv).
+    ir_stmt(ConstEnv, Env.add_var(Id, Type).add_create(Id, Def), decl(Type,T), NewEnv).
 
 
-ir_stmt(Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
-    ir_exp(Env, Exp, V, ExpEnv),
-    ir_stmt(ExpEnv.add_var(Id, Type).add_create(Id, V), decl(Type,T), NewEnv).
+ir_stmt(ConstEnv, Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
+    ir_exp(ConstEnv, Env, Exp, V, ExpEnv),
+    ir_stmt(ConstEnv, ExpEnv.add_var(Id, Type).add_create(Id, V), decl(Type,T), NewEnv).
 
 
-ir_stmt(Env, expstmt(Exp), NewEnv) -->
-    ir_exp(Env, Exp, _, NewEnv).
+ir_stmt(ConstEnv, Env, expstmt(Exp), NewEnv) -->
+    ir_exp(ConstEnv, Env, Exp, _, NewEnv).
 
-ir_stmt(Env, if(If, Then), NewEnv) --> ir_stmt(Env, if(If, Then, skip), NewEnv).
-ir_stmt(Env, if(If, Then, Else), NewEnv) -->
-    ir_exp(Env, If, V, CondEnv),
+ir_stmt(ConstEnv, Env, if(If, Then), NewEnv) --> ir_stmt(ConstEnv, Env, if(If, Then, skip), NewEnv).
+ir_stmt(ConstEnv, Env, if(If, Then, Else), NewEnv) -->
+    ir_exp(ConstEnv, Env, If, V, CondEnv),
     [ if(V, ThenBlock, ElseBlock) ],
     
     { EmptyEnv = CondEnv.reset() },
     
-    ir_block(EmptyEnv, ThenBlock, ThenEnv),
-    ir_stmt(ThenEnv, Then, PostThenEnv),
+    ir_block(ConstEnv, EmptyEnv, ThenBlock, ThenEnv),
+    ir_stmt(ConstEnv, ThenEnv, Then, PostThenEnv),
     [ jump(EndBlock) ],
     
-    ir_block(EmptyEnv, ElseBlock, ElseEnv),
-    ir_stmt(ElseEnv, Else, PostElseEnv),
+    ir_block(ConstEnv, EmptyEnv, ElseBlock, ElseEnv),
+    ir_stmt(ConstEnv, ElseEnv, Else, PostElseEnv),
     [ jump(EndBlock) ],
     
-    ir_block(Env, EndBlock, PostEnv),
+    ir_block(ConstEnv, Env, EndBlock, PostEnv),
     ir_merge_if(PostEnv.add_ask(CondEnv.ask), PostThenEnv, PostElseEnv, NewEnv).
     
 
-ir_stmt(Env, while(While, Do), NewEnv) -->
+ir_stmt(ConstEnv, Env, while(While, Do), NewEnv) -->
     { EmptyEnv = Env.reset() },
     
     [ jump(CondBlock) ],
     
-    ir_block(EmptyEnv, DoBlock, DoEnv),
-    ir_stmt(DoEnv, Do, PostDoEnv),
+    ir_block(ConstEnv, EmptyEnv, DoBlock, DoEnv),
+    ir_stmt(ConstEnv, DoEnv, Do, PostDoEnv),
     [ jump(CondBlock) ],
     
-    ir_block(EmptyEnv, CondBlock, _),
+    ir_block(ConstEnv, EmptyEnv, CondBlock, _),
     ir_while_merge(Env, PostDoEnv, MergeEnv),
-    ir_exp(MergeEnv, While, V, CondEnv),
+    ir_exp(ConstEnv, MergeEnv, While, V, CondEnv),
     [ if(V, DoBlock, EndBlock) ],
     
-    ir_block(CondEnv, EndBlock, NewEnv)
+    ir_block(ConstEnv, CondEnv, EndBlock, NewEnv)
 . % while
 
 % ir_stmt(S) --> { writeln(S), fail }.
 
-ir_block(Env, Label, Env.put(last_block, Label)) --> [ block(Label) ].
+ir_block(_ConstEnv, Env, Label, Env.put(last_block, Label)) --> [ block(Label) ].
 
 
 %%%%%%%%%%%%%%%
@@ -254,13 +247,13 @@ ir_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
     SS = S.put(Id,Reg).
 
 
-ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
-    { format(user_error, "compiling function: ~w : ~w -> ~w~n", [Fun, Args, Ret]) },
+ir_fun(ConstEnv, topdef(Ret, Fun, Args, Body)) -->
+    % { format(user_error, "compiling function: ~w : ~w -> ~w~n", [Fun, Args, Ret]) },
     {
-        ir_env(Ret, InEnv.functions, InEnv.strings, Env),
+        ir_env(Env),
         ir_args(Args, Mod, NArgs),
         FunEnv = Env.add_mod_set(Mod).put(last_block,StartBlock),
-        phrase(ir_stmts(FunEnv, Body, _), Code1, [])
+        phrase(ir_stmts(ConstEnv.put(return_type, Ret), FunEnv, Body, _), Code1, [])
     },
     % last block can be empty due to returns in bramches.
     { append( [block(StartBlock) | Code1], [unreachable], Code) },
