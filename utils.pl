@@ -11,9 +11,11 @@
     get_state//1, put_state//1,
     do_state//1, op(600, fx, do_state),
     ask_state//2,
-    local//2, local//1, op(600, fx, local)
+    local//2, local//1, op(600, fx, local),
+    subtract_eq/3
 ]).
 
+:- use_module(library(dialect/hprolog)).
 
 get_state(S), [S] --> [S].
 put_state(S), [S] --> [_] ; [].
@@ -62,12 +64,12 @@ separated(Sep, Clause, [H | T]) -->
 :- module_transparent dgc_map//2, dgc_map//3.
 dgc_map(_, []) --> [].
 dgc_map(Clause, [H|T]) -->
-    { Clause =.. [Op | Args], append(Args, [H], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T).
+    { Clause =.. [Op | Args], !, append(Args, [H], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T).
 dgc_map(Clause, [H|T]) --> { Run =.. [Clause, H] }, Run, dgc_map(Clause, T).
 
 dgc_map(_, [], []) --> [].
 dgc_map(Clause, [H|T], [HH|TT]) -->
-    { Clause =.. [Op | Args], append(Args, [H, HH], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T, TT).
+    { Clause =.. [Op | Args], !, append(Args, [H, HH], Args2), Run =.. [Op | Args2] }, Run, dgc_map(Clause, T, TT).
 dgc_map(Clause, [H|T], [HH|TT]) --> { Run =.. [Clause, H, HH] }, Run, dgc_map(Clause, T, TT).
 
 :- module_transparent dcg_foldl//4, dcg_foldl//5.
@@ -92,3 +94,12 @@ user:term_expansion(Head :== Exp, Head := V :- V is Exp).
 user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).
 
 ?(M, F) :- _ = M.F.
+
+% works like subtract/3 but uses memberchk_eq
+subtract_eq([], _, []).
+subtract_eq([Elem | Set], Sub, Result) :-
+    memberchk_eq(Elem, Sub), !,
+    subtract_eq(Set, Sub, Result).
+subtract_eq([Elem | Set], Sub, [Elem | Result]) :-
+    subtract_eq(Set, Sub, Result).
+
