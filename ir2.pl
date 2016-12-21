@@ -262,11 +262,8 @@ ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
         FunEnv = Env.add_mod_set(Mod).put(last_block,StartBlock),
         phrase(ir_stmts(FunEnv, Body, _), Code1, [])
     },
-    { prefix([block(StartBlock) | Code1], Code),
-      (Ret \= void ->
-      append(_, [unreachable], Code)
-    ; append(_, [ret, unreachable], Code))
-    },
+    % last block can be empty due to returns in bramches.
+    { append( [block(StartBlock) | Code1], [unreachable], Code) },
     [ function(Ret, Fun, NArgs, Code) ].
 
 ir_fun_decls(_{}) --> [].
