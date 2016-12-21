@@ -176,17 +176,7 @@ ir_stmt(ConstEnv, Env, return(Exp), NewEnv) -->
     ir_exp(ConstEnv, Env, Exp, V, NewEnv),
     [ret(ConstEnv.return_type, V)].
 
-ir_stmt(ConstEnv, InEnv, incr(Id), OutEnv) --> ir_stmt(ConstEnv, InEnv, Id = var(Id) + int(1), OutEnv).
-ir_stmt(ConstEnv, InEnv, decr(Id), OutEnv) --> ir_stmt(ConstEnv, InEnv, Id = var(Id) - int(1), OutEnv).
-
-
 ir_stmt(_ConstEnv, Env, decl(_, []), Env) --> [].
-ir_stmt(ConstEnv, Env, decl(Type, [ noinit(Id) | T ]), NewEnv) -->
-    { Type = int -> Def = 0
-    ; Type = boolean -> Def = 0
-    ; Type = string -> Def = "" },
-    ir_stmt(ConstEnv, Env.add_var(Id, Type).add_create(Id, Def), decl(Type,T), NewEnv).
-
 
 ir_stmt(ConstEnv, Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
     ir_exp(ConstEnv, Env, Exp, V, ExpEnv),
@@ -196,7 +186,6 @@ ir_stmt(ConstEnv, Env, decl(Type, [ init(Id, Exp) | T ]), NewEnv) -->
 ir_stmt(ConstEnv, Env, expstmt(Exp), NewEnv) -->
     ir_exp(ConstEnv, Env, Exp, _, NewEnv).
 
-ir_stmt(ConstEnv, Env, if(If, Then), NewEnv) --> ir_stmt(ConstEnv, Env, if(If, Then, skip), NewEnv).
 ir_stmt(ConstEnv, Env, if(If, Then, Else), NewEnv) -->
     ir_exp(ConstEnv, Env, If, V, CondEnv),
     [ if(V, ThenBlock, ElseBlock) ],

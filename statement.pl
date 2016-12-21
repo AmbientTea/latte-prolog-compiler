@@ -30,11 +30,11 @@ correct(return(Exp), return(NExp)) -->
 
 correct(expstmt(Exp), expstmt(NExp)) --> types(Exp, _, NExp).
 
-correct(incr(Id), incr(Id)) -->
+correct(incr(Id), Id = var(Id) + int(1)) -->
     ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
     ; { fail("cannot increment non-integer variable ~w", [Id]) }.
 
-correct(decr(Id), decr(Id)) -->
+correct(decr(Id), Id = var(Id) - int(1)) -->
     ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
     ; { fail("cannot decrement non-integer variable ~w", [Id]) }.
     
