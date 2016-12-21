@@ -237,6 +237,13 @@ ir_stmt(ConstEnv, Env, while(While, Do), NewEnv) -->
 ir_block(_ConstEnv, Env, Label, Env.put(last_block, Label)) --> [ block(Label) ].
 
 
+
+ir_fun_body(ConstEnv, FunEnv, Body, Ret) -->
+    [ block(StartBlock) ],
+    ir_stmts(ConstEnv.put(return_type, Ret), FunEnv.put(last_block,StartBlock), Body, _),
+    % last block can be empty due to returns in bramches.
+    [ unreachable ].
+
 %%%%%%%%%%%%%%%
 %%% PROGRAM %%%
 %%%%%%%%%%%%%%%
@@ -252,11 +259,9 @@ ir_fun(ConstEnv, topdef(Ret, Fun, Args, Body)) -->
     {
         ir_env(Env),
         ir_args(Args, Mod, NArgs),
-        FunEnv = Env.add_mod_set(Mod).put(last_block,StartBlock),
-        phrase(ir_stmts(ConstEnv.put(return_type, Ret), FunEnv, Body, _), Code1, [])
+        FunEnv = Env.add_mod_set(Mod),
+        phrase(ir_fun_body(ConstEnv, FunEnv, Body, Ret), Code)
     },
-    % last block can be empty due to returns in bramches.
-    { append( [block(StartBlock) | Code1], [unreachable], Code) },
     [ function(Ret, Fun, NArgs, Code) ].
 
 ir_fun_decl(Fun - FunInfo) -->
