@@ -259,11 +259,10 @@ ir_fun(ConstEnv, topdef(Ret, Fun, Args, Body)) -->
     { append( [block(StartBlock) | Code1], [unreachable], Code) },
     [ function(Ret, Fun, NArgs, Code) ].
 
-ir_fun_decls(_{}) --> [].
-ir_fun_decls(Decls) -->
-    { Fun = Decls.get(Key), del_dict(Key, Decls, Fun, Decls2) },
-    ({ Fun.extern = false } ; [ decl(Key, Fun.return, Fun.args) ]),
-    ir_fun_decls(Decls2).
+ir_fun_decl(Fun - FunInfo) -->
+        { FunInfo.extern = false }
+    ;
+        [ decl(Fun, FunInfo.return, FunInfo.args) ].
 
 ir_str_decl(Str1 - Lab - Len) -->
     { string_concat(Str1, "\\00", Str) },
@@ -272,7 +271,7 @@ ir_str_decl(Str1 - Lab - Len) -->
 
 
 program(Env, Program) -->
-    ir_fun_decls(Env.functions),
+    dgc_map(ir_fun_decl, Env.functions),
     dgc_map(ir_str_decl, Env.strings),
     dgc_map(ir_fun(Env), Program).
 

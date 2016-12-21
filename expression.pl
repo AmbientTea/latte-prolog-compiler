@@ -53,7 +53,7 @@ types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_ty
 
 types(app(Fun, Args), Type, app(Fun, NArgs)) -->
     ask_state(functions, FunsInfo),
-    { FunInfo = FunsInfo.get(Fun), ! ; fail("function ~w does not exist", [Fun]) },
+    { member(Fun - FunInfo, FunsInfo), ! ; fail("function ~w does not exist", [Fun]) },
     all_type(Args, ArgTypes, NArgs),
     { Type = FunInfo.return },
     { ArgTypes = FunInfo.args, !

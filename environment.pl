@@ -9,19 +9,19 @@
 emptyenv( environment{
     function_name: ...,
     return_type : void,
-    functions : functions{
-        printInt : fun{ return: void, args: [int], extern: true },
-        printString : fun{ return: void, args: [string], extern: true },
-        concat : fun{ return: string, args: [string, string], extern: true },
-        readInt : fun{ return: int, args: [], extern: true },
-        readString : fun{ return: string, args: [], extern: true }
-    },
+    functions : [
+        printInt    - fun{ return: void, args: [int], extern: true },
+        printString - fun{ return: void, args: [string], extern: true },
+        concat      - fun{ return: string, args: [string, string], extern: true },
+        readInt     - fun{ return: int, args: [], extern: true },
+        readString  - fun{ return: string, args: [], extern: true }
+    ],
     stack : [],
     strings : [],
     returned : false
 }).
 
-M.add_fun(Fun, Type, ArgTypes) := M.put(functions, M.functions.put(Fun,FunInfo)) :-
+M.add_fun(Fun, Type, ArgTypes) := M.put(functions, [Fun - FunInfo | M.functions]) :-
     FunInfo = fun{ return: Type, args: ArgTypes, extern: false }.
 
 M.push() := M.put(stack, [vars{} | M.stack]).
