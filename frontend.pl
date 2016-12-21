@@ -9,6 +9,7 @@ fundef( topdef(RetT, Id, Args, _), (RetT, Id, ArgTs) ) :- maplist(snd, Args, Arg
 envFunInfo(_) :- false.
 
 check(program, Tree, Env, NTree) :- correct_program(Tree, NTree, [], [Env]).
+
 check(stmt, Stmt, Env, NStmt) :-
     emptyenv(Env),
     phrase(correctt(Stmt, NStmt), [Env.epush()], _).

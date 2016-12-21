@@ -7,7 +7,7 @@
 :- op(600, xfy, '||').
 
 
-ir_env(Type, Funs, ir2{
+ir_env(Type, Funs, Strings, ir2{
     ask: _{},
     create: _{},
     mod: _{},
@@ -15,7 +15,7 @@ ir_env(Type, Funs, ir2{
     return_type: Type,
     var_types: _{},
     funs: Funs,
-    strings: []
+    strings: Strings
 }).
 
 E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
@@ -43,8 +43,6 @@ E.add_mod(Key, Val) := E2 :-
 
 E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
 
-E.add_string(Str, Lab, Len) := E.put(strings, [(Str, Lab, Len) | E.strings]).
-
 %%%%%%%%%%%%%%%
 %%% MERGING %%%
 %%%%%%%%%%%%%%%
@@ -70,9 +68,7 @@ ir_while_merge_mods(PreEnv, _, _{}, PreEnv) --> [].
 ir_merge_if(PreEnv, PostThenEnv, PostElseEnv, NewEnv) -->
     ir_merge_if_mods(PreEnv.add_ask(PostThenEnv.ask).add_ask(PostElseEnv.ask),
                              PostThenEnv.last_block, PostThenEnv.mod,
-                             PostElseEnv.last_block, PostElseEnv.mod, NewEnv1),
-    { append([PreEnv.strings, PostThenEnv.strings, PostElseEnv.strings], Strings),
-      NewEnv = NewEnv1.put(strings, Strings) }.
+                             PostElseEnv.last_block, PostElseEnv.mod, NewEnv).
 
 ir_merge_if_mods(PreEnv, Label1, Mod1, Label2, Mod2, NewEnv) -->
     { V1 = Mod1.get(K), del_dict(K, Mod1, V1, NewMod1) },
@@ -101,11 +97,9 @@ ir_exp(Env, int(I), I, Env) --> !, [].
 ir_exp(Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
 ir_exp(Env, false, 0, Env) --> !, [].
 ir_exp(Env, true, 1, Env) --> !, [].
-ir_exp(Env, str(Str1), V, NewEnv) -->
-    [ V = strcast(Len, StrLab) ],
-    { string_length(Str1, Len1), Len is Len1 + 1,
-      string_concat(Str1, "\\00", Str),
-      NewEnv = Env.add_string(Str, StrLab, Len) }.
+ir_exp(Env, str(Str), V, Env) -->
+    { member(Str - StrLab - Len, Env.strings) },
+    [ V = strcast(Len, StrLab) ].
 
 ir_exp(Env, app(Fun, ArgExps), V, NewEnv) -->
     ir_exps(Env, ArgExps, ArgVals, NewEnv),
@@ -178,7 +172,7 @@ ir_stmt(Env, skip, Env) --> [].
 ir_stmt(InEnv, block(Stmts), NewEnv) -->
     { TempEnv = InEnv.reset() },
     ir_stmts(TempEnv, Stmts, OutEnv),
-    { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block).put(strings, OutEnv.strings) }.
+    { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block) }.
 
 ir_stmt(InEnv, Id = Exp, OutEnv) -->
     ir_exp(InEnv, Exp, V, ExpEnv),
@@ -261,12 +255,13 @@ ir_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
 
 
 ir_fun(InEnv, topdef(Ret, Fun, Args, Body)) -->
+    { format(user_error, "compiling function: ~w : ~w -> ~w~n", [Fun, Args, Ret]) },
     {
-        ir_env(Ret, InEnv.functions, Env),
+        ir_env(Ret, InEnv.functions, InEnv.strings, Env),
         ir_args(Args, Mod, NArgs),
-        phrase(ir_stmts(Env.add_mod_set(Mod).put(last_block,StartBlock), Body, FunEnv), Code1)
+        FunEnv = Env.add_mod_set(Mod).put(last_block,StartBlock),
+        phrase(ir_stmts(FunEnv, Body, _), Code1, [])
     },
-    dgc_map(ir_str_decl, FunEnv.strings),
     { prefix([block(StartBlock) | Code1], Code),
       (Ret \= void ->
       append(_, [unreachable], Code)
@@ -280,10 +275,15 @@ ir_fun_decls(Decls) -->
     ({ Fun.extern = false } ; [ decl(Key, Fun.return, Fun.args) ]),
     ir_fun_decls(Decls2).
 
-ir_str_decl((Str, Lab, Len)) --> [ string(Str, Lab, Len) ].
+ir_str_decl(Str1 - Lab - Len) -->
+    { string_concat(Str1, "\\00", Str) },
+    [ string(Str, Lab, Len) ].
+
+
 
 program(Env, Program) -->
     ir_fun_decls(Env.functions),
+    dgc_map(ir_str_decl, Env.strings),
     dgc_map(ir_fun(Env), Program).
 
 

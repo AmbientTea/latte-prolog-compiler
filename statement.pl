@@ -11,7 +11,8 @@ corrects([H|T], [NH|NT]) --> correct(H, NH), !, corrects(T, NT).
 
 merge_return(S1,S2), [NS] --> [S],
     { (S1.returned = true, S2.returned = true) -> Ret = true ; Ret = false },
-    { NS = S.put(returned, Ret) }.
+    { union(S1.strings, S2.strings, Strings) },
+    { NS = S.put(returned, Ret).put(strings, Strings) }.
 
 %%% SIMPLE STATEMENTS %%%
 

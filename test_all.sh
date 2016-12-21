@@ -19,6 +19,6 @@ else
         out=good/`basename $file .lat`.output
         PROG=`./latc $file`
         if [ $? != 0 ]; then exit; fi
-        echo compiled $file ... `$PROG | diff -q - $out`
+        echo compiled $file ... `$PROG | diff -s -q - $out`
     done;
 fi;

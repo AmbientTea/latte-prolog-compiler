@@ -23,16 +23,17 @@ declare_args([(Id, Type) | T]) -->
     declare_args(T).
 
 correct_functions([], []) --> !.
-correct_functions([H|T], [HH|TT]) --> local correct_function(H,HH), !, correct_functions(T, TT).
+correct_functions([H|T], [HH|TT]) --> correct_function(H,HH), !, correct_functions(T, TT).
 
 correct_function(topdef(Return, Fun, Args, Body),
                  topdef(Return, Fun, Args, NBody)) -->
-    do_state(push()),
+    do_state put(returned, false),
+    do_state push(),
     declare_args(Args),
-    do_state(put(return_type, Return)),
-    do_state(put(function_name, Fun)),
+    do_state put(return_type, Return),
+    do_state put(function_name, Fun),
     pushed correct(block(Body), block(NBody)),
-    do_state(pop()),
+    do_state pop(),
     get_state(Mon2),
     { Mon2.returned = false, Return \= void ->
         fail("control flow reaches function ~w end without return", [Fun])

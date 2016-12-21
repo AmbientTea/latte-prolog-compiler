@@ -7,7 +7,7 @@
 
 %%% PRIMITIVE TYPES %%%%
 types(int(I), int, int(I)) --> !.
-types(str(S), string, str(S)) --> !.
+types(str(S), string, str(S)) --> do_state add_string(S).
 types(true, boolean, true) --> !.
 types(false, boolean, false) --> !.
 
