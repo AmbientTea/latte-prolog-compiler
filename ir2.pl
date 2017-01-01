@@ -167,7 +167,7 @@ ir_stmt(ConstEnv, InEnv, block(Stmts), NewEnv) -->
     ir_stmts(ConstEnv, TempEnv, Stmts, OutEnv),
     { NewEnv = InEnv.add_ask(OutEnv.ask).add_mod_set(OutEnv.mod).put(last_block, OutEnv.last_block) }.
 
-ir_stmt(ConstEnv, InEnv, (Id : _Type) = Exp, OutEnv) -->
+ir_stmt(ConstEnv, InEnv, Id = Exp, OutEnv) -->
     ir_exp(ConstEnv, InEnv, Exp, V, ExpEnv),
     { OutEnv = ExpEnv.add_mod(Id, V) }.
 
