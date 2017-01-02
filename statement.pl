@@ -75,12 +75,7 @@ correct(while(While, Do), while(NWhile,NDo)) -->
 
 %%% DECLARATIONS %%%
 correct(decl(Type, Decls), decl(Type, NDecls)) -->
-    decls_correct(Type, Decls, NDecls).
-
-decls_correct(_, [], []) --> !.
-decls_correct(Type, [H|T], [NH|NT]) -->
-    decl_correct(Type, H, NH),
-    decls_correct(Type, T, NT).
+    dcg_map( decl_correct(Type), Decls, NDecls).
 
 decl_correct(Type, init(Id, Exp), init(Id, NExp)) -->
     expect_type(Exp, Type, NExp),

@@ -5,7 +5,7 @@
 
 correct_program(Program, NProgram) -->
     { emptyenv(Env) }, put_state(Env),
-    dgc_map(declare_fun, Program), !,
+    dcg_map(declare_fun, Program), !,
     correct_functions( Program, NProgram).
 
 declare_fun(topdef(Return, Fun, Args, _)) -->

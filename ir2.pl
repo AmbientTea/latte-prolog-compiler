@@ -265,9 +265,9 @@ ir_str_decl(Str1 - Lab - Len) -->
 
 
 program(Env, Program) -->
-    dgc_map(ir_fun_decl, Env.functions),
-    dgc_map(ir_str_decl, Env.strings),
-    dgc_map(ir_fun(Env), Program).
+    dcg_map(ir_fun_decl, Env.functions),
+    dcg_map(ir_str_decl, Env.strings),
+    dcg_map(ir_fun(Env), Program).
 
 
 ir_program(Env, Program, IR) :-

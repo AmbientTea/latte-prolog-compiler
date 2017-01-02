@@ -37,7 +37,7 @@ inst_instr(_, C, C).
 %%%%%%%%%%%%%%%%%%%
 %%% translation %%%
 %%%%%%%%%%%%%%%%%%%
-compile(Prog) --> dgc_map(topdef, Prog).
+compile(Prog) --> dcg_map(topdef, Prog).
 
 % types
 type(int) --> "i32".
