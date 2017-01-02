@@ -1,20 +1,23 @@
 #!/bin/bash
 
-if [ "$1" == "" ] || [ $1 == "interpreter" ]; then
-    echo ==========good============
+echo ========== testing frontend: =============
+for file in `ls bad/*.lat`; do
+    echo -n $file ... 
+    ./latc.pl $file
+done;
+
+if [ "$1" == "interpreter" ] || [ "$1" == "all" ]; then
+    echo ========== testint interpreter: ============
     for file in `ls good/*.lat`; do
         out=good/`basename $file .lat`.output
-        O=`./latc.pl -m eval $file | diff -q - $out`
+        O=`./latc.pl -m eval $file | diff -s -q - $out`
         if [ $? != 0 ]; then exit; fi
 	    echo $file ... $O
     done;
-elif [ "$1" == "frontend" ]; then
-    echo ==========bad=============
-    for file in `ls bad/*.lat`; do
-	    echo -n $file ... 
-	    ./latc.pl $file
-    done;
-else
+fi;
+
+if [ "$1" == "" ] || [ "$1" == "compiler" ] || [ "$1" == "all" ]; then
+    echo ========== testing compiler: =============
     for file in `ls good/*.lat`; do
         out=good/`basename $file .lat`.output
         PROG=`./latc $file`
