@@ -30,17 +30,17 @@ correct(return(Exp), return(Type, NExp)) -->
 
 correct(expstmt(Exp), expstmt(NExp)) --> types(Exp, _, NExp).
 
-correct(incr(Id), Id = var(int, Id) + int(1)) -->
+correct(incr(Id), (Id : int) = var(int, Id) + int(1)) -->
     ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
     ; { fail("cannot increment non-integer variable ~w", [Id]) }.
 
-correct(decr(Id), Id = var(int, Id) - int(1)) -->
+correct(decr(Id), (Id : int) = var(int, Id) - int(1)) -->
     ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
     ; { fail("cannot decrement non-integer variable ~w", [Id]) }.
     
-correct(Id = Exp, Id = NExp) -->
-    ask_state(get_var(Id), VarInfo) ->
-        expect_type(Exp, VarInfo.type, NExp)
+correct(Id = Exp, (Id : VarType) = NExp) -->
+    ask_state(get_var(Id), VarInfo), { VarType = VarInfo.type } ->
+        expect_type(Exp, VarType, NExp)
     ; { fail("variable ~w not declared", [Id]) }.
 
 
