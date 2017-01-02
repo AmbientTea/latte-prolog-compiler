@@ -22,7 +22,7 @@ correct(return, return) -->
         do_state(put(returned, true))
     ; get_state(S), { fail("void return when ~w expected", [S.return_type]) }.
     
-correct(return(Exp), return(NExp)) -->
+correct(return(Exp), return(Type, NExp)) -->
     types(Exp, Type, NExp),
     ( ask_state(return_type, Type) ->
         do_state(put(returned, true))

@@ -172,9 +172,9 @@ ir_stmt(ConstEnv, InEnv, Id = Exp, OutEnv) -->
     { OutEnv = ExpEnv.add_mod(Id, V) }.
 
 ir_stmt(_ConstEnv, Env, return, Env) --> [ret].
-ir_stmt(ConstEnv, Env, return(Exp), NewEnv) -->
+ir_stmt(ConstEnv, Env, return(RetType, Exp), NewEnv) -->
     ir_exp(ConstEnv, Env, Exp, V, NewEnv),
-    [ret(ConstEnv.return_type, V)].
+    [ret(RetType, V)].
 
 ir_stmt(_ConstEnv, Env, decl(_, []), Env) --> [].
 
@@ -227,9 +227,9 @@ ir_block(_ConstEnv, Env, Label, Env.put(last_block, Label)) --> [ block(Label) ]
 
 
 
-ir_fun_body(ConstEnv, FunEnv, Body, Ret) -->
+ir_fun_body(ConstEnv, FunEnv, Body) -->
     [ block(StartBlock) ],
-    ir_stmts(ConstEnv.put(return_type, Ret), FunEnv.put(last_block,StartBlock), Body, _),
+    ir_stmts(ConstEnv, FunEnv.put(last_block,StartBlock), Body, _),
     % last block can be empty due to returns in bramches.
     [ unreachable ].
 
@@ -249,7 +249,7 @@ ir_fun(ConstEnv, topdef(Ret, Fun, Args, Body)) -->
         ir_env(Env),
         ir_args(Args, Mod, NArgs),
         FunEnv = Env.add_mod_set(Mod),
-        phrase(ir_fun_body(ConstEnv, FunEnv, Body, Ret), Code)
+        phrase(ir_fun_body(ConstEnv, FunEnv, Body), Code)
     },
     [ function(Ret, Fun, NArgs, Code) ].
 
