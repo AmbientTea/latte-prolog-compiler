@@ -12,7 +12,8 @@
     do_state//1, op(600, fx, do_state),
     ask_state//2,
     local//2, local//1, op(600, fx, local),
-    subtract_eq/3
+    subtract_eq/3,
+    select_dict/4
 ]).
 
 :- use_module(library(dialect/hprolog)).
@@ -94,6 +95,9 @@ user:term_expansion(Head :== Exp, Head := V :- V is Exp).
 user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).
 
 ?(M, F) :- _ = M.F.
+
+select_dict(Key, DictIn, Value, DictOut) :-
+    Value = DictIn.get(Key), del_dict(Key, DictIn, Value, DictOut).
 
 % works like subtract/3 but uses memberchk_eq
 subtract_eq([], _, []).

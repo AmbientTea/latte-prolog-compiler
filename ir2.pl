@@ -49,7 +49,7 @@ ir_while_merge(PreEnv, PostEnv, NewEnv) -->
 .
 
 ir_while_merge_mods(PreEnv, ModLabel, Mod, NewEnv) -->
-    { V1 = Mod.get(K), del_dict(K, Mod, V1, Mod2) },
+    { select_dict(K, Mod, V1, Mod2) },
     { V2 = PreEnv.create.get(K) -> PreEnv2 = PreEnv.add_create(K, V3)
     ; V2 = PreEnv.mod.get(K) -> PreEnv2 = PreEnv.add_mod(K,V3)
     ; V2 = PreEnv.ask.get(K) -> PreEnv2 = PreEnv.add_mod(K,V3)
@@ -67,9 +67,9 @@ ir_merge_if(PreEnv, PostThenEnv, PostElseEnv, NewEnv) -->
                              PostElseEnv.last_block, PostElseEnv.mod, NewEnv).
 
 ir_merge_if_mods(PreEnv, Label1, Mod1, Label2, Mod2, NewEnv) -->
-    { V1 = Mod1.get(K), del_dict(K, Mod1, V1, NewMod1) },
+    { select_dict(K, Mod1, V1, NewMod1) },
     {
-        ( V2 = Mod2.get(K), del_dict(K, Mod2, V2, NewMod2)
+        ( select_dict(K, Mod2, V2, NewMod2)
         ; V2 = PreEnv.create.get(K), NewMod2 = Mod2
         ; V2 = PreEnv.mod.get(K), NewMod2 = Mod2 ) ->
             PreEnv1 = PreEnv.add_mod(K, V3)
