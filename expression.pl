@@ -12,7 +12,7 @@ types(true, boolean, true) --> !.
 types(false, boolean, false) --> !.
 
 %%% VARIABLES %%%
-types( var(V), Type, var(V) ) -->
+types( var(V), Type, var(Type, V) ) -->
     ask_state(get_var(V), VarInfo) ->
         { Type = VarInfo.type }
     ; { fail("variable ~w not declared", [V]) }.

@@ -90,7 +90,7 @@ ir_merge_if_mods(PreEnv, Label1, _{}, Label2, Mod2, NewEnv) -->
 ir_exps(ConstEnv, Env, L, LL, NewEnv) --> dcg_foldl(ir_exp(ConstEnv), Env, L, LL, NewEnv).
 
 ir_exp(_ConstEnv, Env, int(I), I, Env) --> !, [].
-ir_exp(_ConstEnv, Env, var(Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
+ir_exp(_ConstEnv, Env, var(_VarType, Id), Reg, Env.add_ask(Id, Reg)) --> !, [].
 ir_exp(_ConstEnv, Env, false, 0, Env) --> !, [].
 ir_exp(_ConstEnv, Env, true, 1, Env) --> !, [].
 ir_exp(ConstEnv, Env, str(Str), V, Env) -->
