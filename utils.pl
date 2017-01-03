@@ -15,7 +15,8 @@
     ask_state//2,
     local//2, local//1, op(600, fx, local),
     subtract_eq/3,
-    select_dict/4
+    select_dict/4,
+    keys//0
 ]).
 
 % needed for memberchk_eq/2
@@ -133,6 +134,10 @@ user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).
 
 ?(M, F) :- _ = M.F.
 
+:- module_transparent keys//0.
+D.keys() := Keys :-
+    dict_pairs(D, _, Pairs),
+    maplist(fst, Pairs, Keys).
 
 % works like subtract/3 but uses memberchk_eq
 subtract_eq([], _, []).
