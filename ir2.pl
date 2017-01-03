@@ -18,23 +18,25 @@ E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
 E.add_var(Id, Type) := E.put(var_types, E.var_types.put(Id, Type)).
 E.get_var(Id) := E.var_types.Id.
 
-E.add_ask(Key, Val) := E.add_ask(_{}.put(Key,Val)).
+
+
+E.add_ask(Key, Val) := E :- Val = E.create.get(Key), !.
+E.add_ask(Key, Val) := E :- Val = E.mod.get(Key), !.
+E.add_ask(Key, Val) := E :- Val = E.ask.get(Key).
+E.add_ask(Key, Val) := E.put(ask, E.ask.put(Key, Val)).
+
 E.add_ask(_{}) := E :- !.
-E.add_ask(Ask) := E2.add_ask(Ask2) :-
-    Val = Ask.get(Key),
-    del_dict(Key, Ask, Val, Ask2),
-    ( Val = E.create.get(Key) -> E2 = E
-    ; Val = E.mod.get(Key) -> E2 = E
-    ; (E.ask.get(Key) = Val, E2 = E ; E2 = E.put(ask, E.ask.put(Key, Val))) ).
+E.add_ask(Ask) := E.add_ask(Key, Val).add_ask(Ask2) :-
+    select_dict(Key, Ask, Val, Ask2).
+
 
 E.add_mod_set(_{}) := E :- !.
 E.add_mod_set(Mod) := E.add_mod(Key, Val).add_mod_set(Mod2) :-
-    Val = Mod.get(Key),
-    del_dict(Key, Mod, Val, Mod2).
+    select_dict(Key, Mod, Val, Mod2).
 
 E.add_mod(Key, Val) := E2 :-
     E.create ? get(Key) ->
-      E2 = E.put(create, E.create.put(Key, Val))
+      E2 = E.add_create(Key, Val)
     ; E2 = E.put(mod, E.mod.put(Key, Val)).
 
 E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
@@ -42,6 +44,7 @@ E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
 %%%%%%%%%%%%%%%
 %%% MERGING %%%
 %%%%%%%%%%%%%%%
+
 
 ir_while_merge(PreEnv, PostEnv, NewEnv) -->
     ir_while_merge_mods(PreEnv, PostEnv.last_block, PostEnv.mod, Env1),
