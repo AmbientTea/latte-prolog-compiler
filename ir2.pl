@@ -143,7 +143,14 @@ ir_merge_if_mods(PreEnv, Label1, e{}, Label2, Mod2, NewEnv) -->
 %%% ir %%%
 %%%%%%%%%%%%%%%%%%%
 
-% EXPRESSIONS_exps(ConstEnv, Env, L, LL, NewEnv) --> dcg_foldl(ir_exp(ConstEnv), Env, L, LL, NewEnv).
+% EXPRESSIONS
+
+ir_exps(_ConstEnv, [], [], Env) --> ir_empty_env(Env).
+ir_exps(ConstEnv, [Exp | L], [Reg | LL], Env) -->
+    ir_exp(ConstEnv, Exp, Reg, Env1),
+    ir_exps(ConstEnv, L, LL, Env2),
+    semicolon_merge(Env1, Env2, Env).
+    
 
 ir_exp(_ConstEnv, int(I), I, Env) -->
     ir_empty_env(Env).
@@ -156,18 +163,21 @@ ir_exp(_ConstEnv, var(VarType, Id), Reg, Env) -->
     ir_ask_env(Id, VarType - Reg, Env).
 
 
+ir_exp(ConstEnv, app(Fun, ArgExps), V, Env) -->
+    ir_exps(ConstEnv, ArgExps, ArgVals, Env),
+    {
+        zip(ArgVals, ConstEnv.functions.Fun.args, Args),
+        Type = ConstEnv.functions.Fun.return
+    },
+    ({ Type = void } ->
+      [ call(Fun, Args) ]
+    ; [ V = call(Type, Fun, Args) ]).
+
 /*
 ir_exp(ConstEnv, Env, str(Str), V, Env) -->
     { member(Str - StrLab - Len, ConstEnv.strings) },
     [ V = strcast(Len, StrLab) ].
 
-ir_exp(ConstEnv, Env, app(Fun, ArgExps), V, NewEnv) -->
-    ir_exps(ConstEnv, Env, ArgExps, ArgVals, NewEnv),
-    { zip(ArgVals, ConstEnv.functions.Fun.args, Args) },
-    {Type = ConstEnv.functions.Fun.return},
-    ({ Type = void } ->
-      [ call(Fun, Args) ]
-    ; [ V = call(Type, Fun, Args) ]).
 
 ir_exp(ConstEnv, Env, E1 ++ E2, V, NewEnv) --> ir_exp(ConstEnv, Env, app(concat, [E1, E2]), V, NewEnv).
 
@@ -333,14 +343,16 @@ ir_fun_body(ConstEnv, Body, Env) -->
 ir_args([], e{}, []).
 ir_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
     ir_args(T, S, TT),
-    SS = S.put(Id,Reg).
+    SS = S.put(Id,Type - Reg).
 
 
 ir_fun(ConstEnv, topdef(Ret, Fun, Args, Body)) -->
     % { format(user_error, "compiling function: ~w : ~w -> ~w~n", [Fun, Args, Ret]) },
     {
-        ir_args(Args, _Mod, NArgs),
-        phrase(ir_fun_body(ConstEnv, Body, _Env), Code)
+        ir_args(Args, Mod, NArgs),
+        phrase(ir_fun_body(ConstEnv, Body, Env), Code),
+        % plug in the arguments
+        Mod >:< Env.ask
     },
     [ function(Ret, Fun, NArgs, Code) ].
 
