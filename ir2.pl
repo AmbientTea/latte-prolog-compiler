@@ -159,6 +159,11 @@ ir_exp(_ConstEnv, false, 0, Env) -->
 ir_exp(_ConstEnv, true, 1, Env) -->
     ir_empty_env(Env).
 
+ir_exp(ConstEnv, str(Str), V, Env) -->
+    { member(Str - StrLab - Len, ConstEnv.strings) },
+    [ V = strcast(Len, StrLab) ],
+    ir_empty_env(Env).
+
 ir_exp(_ConstEnv, var(VarType, Id), Reg, Env) -->
     ir_ask_env(Id, VarType - Reg, Env).
 
@@ -173,20 +178,17 @@ ir_exp(ConstEnv, app(Fun, ArgExps), V, Env) -->
       [ call(Fun, Args) ]
     ; [ V = call(Type, Fun, Args) ]).
 
-/*
-ir_exp(ConstEnv, Env, str(Str), V, Env) -->
-    { member(Str - StrLab - Len, ConstEnv.strings) },
-    [ V = strcast(Len, StrLab) ].
 
+ir_exp(ConstEnv, E1 ++ E2, V, Env) -->
+    ir_exp(ConstEnv, app(concat, [E1, E2]), V, Env).
 
-ir_exp(ConstEnv, Env, E1 ++ E2, V, NewEnv) --> ir_exp(ConstEnv, Env, app(concat, [E1, E2]), V, NewEnv).
-
-ir_exp(ConstEnv, Env, E, V, NewEnv) -->
+ir_exp(ConstEnv, E, V, Env) -->
     { E =.. [Op, Type, E1, E2], member(Op, ['!=', '==']), VV =.. [Op, Type, V1, V2] }, !,
-    ir_exp(ConstEnv, Env, E1, V1, Env1),
-    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
-    [V = VV], !.
-*/
+    ir_exp(ConstEnv, E1, V1, Env1),
+    ir_exp(ConstEnv, E2, V2, Env2),
+    [V = VV],
+    { Ask set_is Env1.ask + Env2.ask },
+    ir_ask_env(Ask, Env).
 
 ir_exp(ConstEnv, E, V, Env) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=']), VV =.. [Op, V1, V2] }, !,
@@ -276,10 +278,8 @@ ir_stmt(ConstEnv, decl(Type, [ init(Id, Exp) | T ]), Env) -->
     ir_stmt(ConstEnv, decl(Type,T), StmtEnv),
     semicolon_merge(ExpEnv.add_to(gen, Id, Type - V), StmtEnv, Env).
 
-/*
-ir_stmt(ConstEnv, Env, expstmt(Exp), NewEnv) -->
-    ir_exp(ConstEnv, Env, Exp, _, NewEnv).
-*/
+ir_stmt(ConstEnv, expstmt(Exp), Env) -->
+    ir_exp(ConstEnv, Exp, _, Env).
 
 
 ir_stmt(ConstEnv, if(If, Then, Else), Env) -->
