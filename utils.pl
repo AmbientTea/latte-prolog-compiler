@@ -16,7 +16,8 @@
     local//2, local//1, op(600, fx, local),
     subtract_eq/3,
     select_dict/4,
-    keys//0
+    keys//0,
+    if_possible/1, op(600, fx, if_possible)
 ]).
 
 % needed for memberchk_eq/2
@@ -31,6 +32,9 @@ fst(X, A) :- X =.. [_, A | _].
 
 snd((_, B), B).
 snd(X, B) :- X =.. [_, _, B | _].
+
+if_possible Clause :- Clause, !.
+if_possible _Clause.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % DGC State Handling %
