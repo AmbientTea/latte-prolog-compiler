@@ -6,11 +6,13 @@
 :- op(600, xfy, '&&').
 :- op(600, xfy, '||').
 
+% sets need uniform e tag for unification
 ir_empty_env(ir2{
-    ask: _{},
-    mod: _{},
-    gen: _{},
-    last_block: ...
+    ask: e{},
+    mod: e{},
+    gen: e{},
+    last_block: _Block,
+    block_known: false
 }) --> [].
 
 E.add_to(Field, Id, Elem) := E.put(Field, E.Field.put(Id, Elem)).
@@ -24,7 +26,7 @@ ir_ask_env(Ask, Env) -->
     { Env = Env1.put(ask, Ask) }.
 
 /*
-E.reset() := E.put(ask, _{}).put(mod, _{}).put(create,_{}).
+E.reset() := E.put(ask, e{}).put(mod, e{}).put(create,e{}).
 E.add_var(Id, Type) := E.put(var_types, E.var_types.put(Id, Type)).
 E.get_var(Id) := E.var_types.Id.
 
@@ -35,12 +37,12 @@ E.add_ask(Key, Val) := E :- Val = E.mod.get(Key), !.
 E.add_ask(Key, Val) := E :- Val = E.ask.get(Key).
 E.add_ask(Key, Val) := E.put(ask, E.ask.put(Key, Val)).
 
-E.add_ask(_{}) := E :- !.
+E.add_ask(e{}) := E :- !.
 E.add_ask(Ask) := E.add_ask(Key, Val).add_ask(Ask2) :-
     select_dict(Key, Ask, Val, Ask2).
 
 
-E.add_mod_set(_{}) := E :- !.
+E.add_mod_set(e{}) := E :- !.
 E.add_mod_set(Mod) := E.add_mod(Key, Val).add_mod_set(Mod2) :-
     select_dict(Key, Mod, Val, Mod2).
 
@@ -57,18 +59,43 @@ E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
 %%%%%%%%%%%%%%%
 
 semicolon_merge( Env1, Env2, Env ) --> {
-    Env = _{
+    Env = ir2{
         ask: Ask,
         mod: Mod,
         gen: Gen,
-        last_block: Block
+        last_block: Env2.last_block,
+        block_known: Known
     },
     Ask set_is Env1.ask + (Env2.ask ~ Env1.gen ~ Env1.mod),
     Mod set_is Env2.mod + (Env1.mod - Env2.mod) - Env1.gen,
     Gen set_is Env1.gen + Env2.gen,
-    Block = Env2.last_block,
-    (Env1.last_block = Env2.last_block, ! ; true)
+    ( Env2.block_known -> Known = true
+    ; Env1.block_known -> Known = true, Env2.last_block = Env1.last_block
+    ;                    Known = false, Env2.last_block = Env1.last_block )
 }.
+
+or_merge(Env1, Env2, Env) --> {
+    Env = ir2{
+        ask: Ask,
+        mod: Mod,
+        gen: e{},
+        last_block: Env2.last_block,
+        block_known: true
+        },
+    Ask set_is Env1.ask + Env2.ask,
+    union(Env1.mod.keys(), Env2.mod.keys(), ModKeys)
+    },
+    
+    dcg_map(or_merge_phi(Env1, Env2), ModKeys, NewRegs),
+    
+    { dict_pairs(Mod, e, NewRegs) }.
+
+or_merge_phi(Env1, Env2, Key, Key - (Type - Reg)) -->
+    [ Reg = phi(Type, [(V1, Env1.last_block), (V2, Env2.last_block)]) ],
+    {
+        (Type - V1 = Env1.mod.get(Key), ! ; Type - V1 = Env1.ask.get(Key)),
+        (Type - V2 = Env2.mod.get(Key), ! ; Type - V2 = Env2.ask.get(Key))
+    }.
 
 /*
 ir_while_merge(PreEnv, PostEnv, NewEnv) -->
@@ -86,7 +113,7 @@ ir_while_merge_mods(PreEnv, ModLabel, Mod, NewEnv) -->
     [ V3 = phi(PreEnv.get_var(K), [(V1, ModLabel), (V2, PreEnv.last_block)]) ],
     ir_while_merge_mods(PreEnv2, ModLabel, Mod2, NewEnv).
 
-ir_while_merge_mods(PreEnv, _, _{}, PreEnv) --> [].
+ir_while_merge_mods(PreEnv, _, e{}, PreEnv) --> [].
 
 
 ir_merge_if(PreEnv, PostThenEnv, PostElseEnv, NewEnv) -->
@@ -107,9 +134,9 @@ ir_merge_if_mods(PreEnv, Label1, Mod1, Label2, Mod2, NewEnv) -->
     [ V3 = phi(PreEnv.get_var(K), [(V1, Label1), (V2, Label2)]) ],
     ir_merge_if_mods(PreEnv1, Label1, NewMod1, Label2, NewMod2, NewEnv).
 
-ir_merge_if_mods(PreEnv, _, _{}, _, _{}, PreEnv) --> [].
-ir_merge_if_mods(PreEnv, Label1, _{}, Label2, Mod2, NewEnv) -->
-    ir_merge_if_mods(PreEnv, Label2, Mod2, Label1, _{}, NewEnv).
+ir_merge_if_mods(PreEnv, _, e{}, _, e{}, PreEnv) --> [].
+ir_merge_if_mods(PreEnv, Label1, e{}, Label2, Mod2, NewEnv) -->
+    ir_merge_if_mods(PreEnv, Label2, Mod2, Label1, e{}, NewEnv).
 */
 %%%%%%%%%%%%%%%%%%%
 %%% ir %%%
@@ -206,7 +233,7 @@ ir_stmt(_ConstEnv, skip, Env) --> ir_empty_env(Env).
 
 ir_stmt(ConstEnv, block(Stmts), Env) -->
     ir_stmts(ConstEnv, Stmts, StmtEnv),
-    { Env = StmtEnv.put(gen, _{}) }.
+    { Env = StmtEnv.put(gen, e{}) }.
 
 ir_stmt(ConstEnv, (Id : VarType) = Exp, Env) -->
     ir_exp(ConstEnv, Exp, V, ExpEnv),
@@ -223,30 +250,39 @@ ir_stmt(_ConstEnv, decl(_Type, []), Env) --> ir_empty_env(Env).
 ir_stmt(ConstEnv, decl(Type, [ init(Id, Exp) | T ]), Env) -->
     ir_exp(ConstEnv, Exp, V, ExpEnv),
     ir_stmt(ConstEnv, decl(Type,T), StmtEnv),
-    semicolon_merge(ExpEnv.add_to(gen, Id,Type - V), StmtEnv, Env).
+    semicolon_merge(ExpEnv.add_to(gen, Id, Type - V), StmtEnv, Env).
 
 /*
 ir_stmt(ConstEnv, Env, expstmt(Exp), NewEnv) -->
     ir_exp(ConstEnv, Env, Exp, _, NewEnv).
+*/
 
-ir_stmt(ConstEnv, Env, if(If, Then, Else), NewEnv) -->
-    ir_exp(ConstEnv, Env, If, V, CondEnv),
+
+ir_stmt(ConstEnv, if(If, Then, Else), Env) -->
+    ir_exp(ConstEnv, If, V, IfEnv),
+    
     [ if(V, ThenBlock, ElseBlock) ],
     
-    { EmptyEnv = CondEnv.reset() },
-    
-    ir_block(ConstEnv, EmptyEnv, ThenBlock, ThenEnv),
-    ir_stmt(ConstEnv, ThenEnv, Then, PostThenEnv),
+    [ block(ThenBlock) ],
+    ir_stmt(ConstEnv, Then, ThenEnv),
     [ jump(EndBlock) ],
     
-    ir_block(ConstEnv, EmptyEnv, ElseBlock, ElseEnv),
-    ir_stmt(ConstEnv, ElseEnv, Else, PostElseEnv),
+    [ block(ElseBlock) ],
+    ir_stmt(ConstEnv, Else, ElseEnv),
     [ jump(EndBlock) ],
     
-    ir_block(ConstEnv, Env, EndBlock, PostEnv),
-    ir_merge_if(PostEnv.add_ask(CondEnv.ask), PostThenEnv, PostElseEnv, NewEnv).
+    [ block(EndBlock) ],
+    
+    or_merge(ThenEnv, ElseEnv, OrEnv),
+    semicolon_merge(IfEnv, OrEnv, Env1),
+    {
+        if_possible (ThenEnv.block_known = false -> ThenEnv.last_block = ThenBlock),
+        if_possible (ElseEnv.block_known = false -> ElseEnv.last_block = ElseBlock),
+        Env = Env1.put(last_block, EndBlock).put(block_known, true)
+    }.
     
 
+/*
 ir_stmt(ConstEnv, Env, while(While, Do), NewEnv) -->
     { EmptyEnv = Env.reset() },
     
@@ -280,7 +316,7 @@ ir_fun_body(ConstEnv, Body, Env) -->
 %%% PROGRAM %%%
 %%%%%%%%%%%%%%%
 
-ir_args([], _{}, []).
+ir_args([], e{}, []).
 ir_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
     ir_args(T, S, TT),
     SS = S.put(Id,Reg).
