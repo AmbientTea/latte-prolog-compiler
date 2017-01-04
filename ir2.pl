@@ -16,6 +16,7 @@ ir_empty_env(ir2{
 }) --> [].
 
 E.add_to(Field, Id, Elem) := E.put(Field, E.Field.put(Id, Elem)).
+E.set_block(Block) := E.put(last_block, Block).put(block_known, true).
 
 ir_ask_env(Id, Reg, Env) -->
     ir_empty_env(Env1),
@@ -146,13 +147,16 @@ ir_merge_if_mods(PreEnv, Label1, e{}, Label2, Mod2, NewEnv) -->
 
 ir_exp(_ConstEnv, int(I), I, Env) -->
     ir_empty_env(Env).
+ir_exp(_ConstEnv, false, 0, Env) -->
+    ir_empty_env(Env).
+ir_exp(_ConstEnv, true, 1, Env) -->
+    ir_empty_env(Env).
 
 ir_exp(_ConstEnv, var(VarType, Id), Reg, Env) -->
     ir_ask_env(Id, VarType - Reg, Env).
 
+
 /*
-ir_exp(_ConstEnv, Env, false, 0, Env) --> !, [].
-ir_exp(_ConstEnv, Env, true, 1, Env) --> !, [].
 ir_exp(ConstEnv, Env, str(Str), V, Env) -->
     { member(Str - StrLab - Len, ConstEnv.strings) },
     [ V = strcast(Len, StrLab) ].
@@ -182,9 +186,11 @@ ir_exp(ConstEnv, E, V, Env) -->
     { Ask set_is Env1.ask + Env2.ask },
     ir_ask_env(Ask, Env).
 
-/*
-ir_exp(ConstEnv, Env, Exp, V, NewEnv) -->
-    ir_cond(ConstEnv, Env, Exp, True, False, NewEnv),
+ir_exp(ConstEnv, Exp, V, Env) -->
+    % guard for looping
+    { member(Exp, [not(_), _ '||' _, _ && _]) }, 
+    ir_cond(ConstEnv, Exp, True, False, Env1),
+    { Env = Env1.set_block(End) },
     
     [ block(True),
       jump(End) ],
@@ -192,33 +198,41 @@ ir_exp(ConstEnv, Env, Exp, V, NewEnv) -->
     [ block(False),
       jump(End) ],
     
-    [ block(End), V = phi(boolean, [(1, True), (0, False)]) ].
-    
-ir_exp(_,_, E, _, _) --> { writeln(fail:E), halt }.
+    [ block(End),
+      V = phi(boolean, [(1, True), (0, False)]) ].
 
-ir_cond(ConstEnv, Env, not(Exp), LabTrue, LabFalse, NewEnv) -->
-    ir_cond(ConstEnv, Env, Exp, LabFalse, LabTrue, NewEnv).
+ir_cond(ConstEnv, not(Exp), LabTrue, LabFalse, Env) -->
+    ir_cond(ConstEnv, Exp, LabFalse, LabTrue, Env).
 
-ir_cond(ConstEnv, Env, E1 && E2, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(ConstEnv, Env, E1, V1, Env1),
+
+ir_cond(ConstEnv, E1 && E2, LabTrue, LabFalse, Env) -->
+    ir_exp(ConstEnv, E1, V1, Env1),
     [ if(V1, Second, LabFalse) ],
     
     [ block(Second) ],
-    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
-    [ if(V2, LabTrue, LabFalse) ].
+    ir_exp(ConstEnv, E2, V2, Env2),
+    { Env2.block_known -> Env3 = Env2
+    ; Env3 = Env2.set_block(Second), Env2.last_block = Second },
+    [ if(V2, LabTrue, LabFalse) ],
+    
+    semicolon_merge(Env1, Env3, Env).
 
-ir_cond(ConstEnv, Env, E1 '||' E2, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(ConstEnv, Env, E1, V1, Env1),
+ir_cond(ConstEnv, E1 '||' E2, LabTrue, LabFalse, Env) -->
+    ir_exp(ConstEnv, E1, V1, Env1),
     [ if(V1, LabTrue, Second) ],
     
     [ block(Second) ],
-    ir_exp(ConstEnv, Env1, E2, V2, NewEnv),
-    [ if(V2, LabTrue, LabFalse) ].
+    ir_exp(ConstEnv, E2, V2, Env2),
+    { Env2.block_known -> Env3 = Env2
+    ; Env3 = Env2.set_block(Second), Env2.last_block = Second },
+    [ if(V2, LabTrue, LabFalse) ],
+    
+    semicolon_merge(Env1, Env3, Env).
 
-ir_cond(ConstEnv, Env, Exp, LabTrue, LabFalse, NewEnv) -->
-    ir_exp(ConstEnv, Env, Exp, V, NewEnv),
+ir_cond(ConstEnv, Exp, LabTrue, LabFalse, Env) -->
+    ir_exp(ConstEnv, Exp, V, Env),
     [ if(V, LabTrue, LabFalse) ].
-*/
+
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
