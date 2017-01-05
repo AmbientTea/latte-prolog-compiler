@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cloc --force-lang-def=lang_defs.cloc --force-lang=prolog *.pl
