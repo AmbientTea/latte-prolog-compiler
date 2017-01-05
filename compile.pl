@@ -6,7 +6,7 @@
 :- use_module(optimize).
 
 compile(Opts, Env, Prog, Out) :-
-    ir_program(Env,Prog, IR), !,
+    program(Env,Prog, IR), !,
     (member(optimize(true), Opts) ->
         % writeln(user_error, optimizing),
         optimize(IR, OpIR)
