@@ -18,7 +18,8 @@
     subtract_eq/3,
     select_dict/4,
     keys//0,
-    if_possible/1, op(600, fx, if_possible)
+    if_possible/1, op(600, fx, if_possible),
+    leave_gap//1, fill_gap//2
 ]).
 
 % needed for memberchk_eq/2
