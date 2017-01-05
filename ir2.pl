@@ -29,6 +29,13 @@ ir_ask_env(Ask, Env) -->
 %%% MERGING %%%
 %%%%%%%%%%%%%%%
 
+expression_merge(Env1, Env2, Env) --> 
+    ir_empty_env(EmptyEnv),
+    {
+        Ask set_is Env1.ask + Env2.ask,
+        Env = EmptyEnv.put(ask, Ask)
+    }.
+
 semicolon_merge( Env1, Env2, Env ) --> {
     Env = ir2{
         ask: Ask,
@@ -105,7 +112,7 @@ ir_exps(_ConstEnv, [], [], Env) --> ir_empty_env(Env).
 ir_exps(ConstEnv, [Exp | L], [Reg | LL], Env) -->
     ir_exp(ConstEnv, Exp, Reg, Env1),
     ir_exps(ConstEnv, L, LL, Env2),
-    semicolon_merge(Env1, Env2, Env).
+    expression_merge(Env1, Env2, Env).
     
 
 ir_exp(_ConstEnv, int(I), I, Env) -->
@@ -143,16 +150,14 @@ ir_exp(ConstEnv, E, V, Env) -->
     ir_exp(ConstEnv, E1, V1, Env1),
     ir_exp(ConstEnv, E2, V2, Env2),
     [V = VV],
-    { Ask set_is Env1.ask + Env2.ask },
-    ir_ask_env(Ask, Env).
+    expression_merge(Env1, Env2, Env).
 
 ir_exp(ConstEnv, E, V, Env) -->
     { E =.. [Op, E1, E2], member(Op, [+,-,*,/,'%',<,>,'<=','>=']), VV =.. [Op, V1, V2] }, !,
     ir_exp(ConstEnv, E1, V1, Env1),
     ir_exp(ConstEnv, E2, V2, Env2),
     [V = VV],
-    { Ask set_is Env1.ask + Env2.ask },
-    ir_ask_env(Ask, Env).
+    expression_merge(Env1, Env2, Env).
 
 ir_exp(ConstEnv, Exp, V, Env) -->
     % guard for looping
@@ -185,7 +190,7 @@ ir_cond(ConstEnv, E1 && E2, LabTrue, LabFalse, Env) -->
     ; Env3 = Env2.set_block(Second), Env2.last_block = Second },
     [ if(V2, LabTrue, LabFalse) ],
     
-    semicolon_merge(Env1, Env3, Env).
+    expression_merge(Env1, Env3, Env).
 
 ir_cond(ConstEnv, E1 '||' E2, LabTrue, LabFalse, Env) -->
     ir_exp(ConstEnv, E1, V1, Env1),
@@ -197,7 +202,7 @@ ir_cond(ConstEnv, E1 '||' E2, LabTrue, LabFalse, Env) -->
     ; Env3 = Env2.set_block(Second), Env2.last_block = Second },
     [ if(V2, LabTrue, LabFalse) ],
     
-    semicolon_merge(Env1, Env3, Env).
+    expression_merge(Env1, Env3, Env).
 
 ir_cond(ConstEnv, Exp, LabTrue, LabFalse, Env) -->
     ir_exp(ConstEnv, Exp, V, Env),
