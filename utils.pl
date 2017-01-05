@@ -78,6 +78,7 @@ zip([H1|T1], [H2|T2], [(H1,H2)|T]) :- zip(T1, T2, T).
 leave_gap((In, Out), In, Out).
 
 % fills a gap 
+:- module_transparent fill_gap//2.
 fill_gap((GapIn, GapOut), Fill, Flow, Flow) :-
     is_list(Fill) ->
         append(Fill, GapOut, GapIn)
@@ -157,7 +158,7 @@ user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).
 :- module_transparent keys//0.
 D.keys() := Keys :-
     dict_pairs(D, _, Pairs),
-    maplist(fst, Pairs, Keys).
+    maplist(fst(-), Pairs, Keys).
 
 % works like subtract/3 but uses memberchk_eq
 subtract_eq([], _, []).
