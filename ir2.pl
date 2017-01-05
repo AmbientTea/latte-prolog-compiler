@@ -169,6 +169,8 @@ ir_exp(ConstEnv, Exp, V, Env) -->
     [ block(End),
       V = phi(boolean, [(1, True), (0, False)]) ].
 
+% boolean expressions
+
 ir_cond(ConstEnv, not(Exp), LabTrue, LabFalse, Env) -->
     ir_cond(ConstEnv, Exp, LabFalse, LabTrue, Env).
 
@@ -239,9 +241,7 @@ ir_stmt(ConstEnv, expstmt(Exp), Env) -->
 
 
 ir_stmt(ConstEnv, if(If, Then, Else), Env) -->
-    ir_exp(ConstEnv, If, V, IfEnv),
-    
-    [ if(V, ThenBlock, ElseBlock) ],
+    ir_cond(ConstEnv, If, ThenBlock, ElseBlock, IfEnv),
     
     [ block(ThenBlock) ],
     ir_stmt(ConstEnv, Then, ThenEnv),
@@ -270,8 +270,7 @@ ir_stmt(ConstEnv, while(While, Do), Env) -->
     
     [ block(WhileBlock) ],
     leave_gap(MergeGap),
-    ir_exp(ConstEnv, While, V, WhileEnv),
-    [ if(V, DoBlock, EndBlock) ],
+    ir_cond(ConstEnv, While, DoBlock, EndBlock, WhileEnv),
     
     [ block(DoBlock) ],
     ir_stmt(ConstEnv, Do, DoEnv),
