@@ -5,6 +5,7 @@
     op(700, xfx, set_is), set_is/2,
     fail/1, fail/2,
     fst/2, snd/2,
+    fst/3, snd/3,
     foldr/4,
     zip/3,
     dcg_map//2, dcg_map//3,
@@ -28,10 +29,10 @@
 %%%%%%%%%%%%%%%%%%%%
 
 fst((A,_), A).
-fst(X, A) :- X =.. [_, A | _].
+fst(Op, X, A) :- X =.. [Op, A, _B].
 
 snd((_, B), B).
-snd(X, B) :- X =.. [_, _, B | _].
+snd(Op, X, B) :- X =.. [Op, _A, B].
 
 if_possible Clause :- Clause, !.
 if_possible _Clause.
