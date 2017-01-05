@@ -349,14 +349,14 @@ string_declaration(Str1 - Lab - Len) -->
 
 
 
-program(Dep, Program) -->
-    dcg_map(function_declaration, Dep.functions),
-    dcg_map(string_declaration, Dep.strings),
-    dcg_map(function_definition(Dep), Program).
+program(Env, Program) -->
+    dcg_map(function_declaration, Env.functions),
+    dcg_map(string_declaration, Env.strings),
+    dcg_map(function_definition(Env), Program).
 
 
-program(Dep, Program, IR) :-
-    phrase(program(Dep, Program), IR), !
+program(Env, Program, IR) :-
+    phrase(program(Env, Program), IR), !
 .
 
 
