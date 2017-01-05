@@ -15,46 +15,16 @@ ir_empty_env(ir2{
     block_known: false
 }) --> [].
 
-E.add_to(Field, Id, Elem) := E.put(Field, E.Field.put(Id, Elem)).
 E.set_block(Block) := E.put(last_block, Block).put(block_known, true).
 
 ir_ask_env(Id, Reg, Env) -->
     ir_empty_env(Env1),
-    { Env = Env1.put(ask, Env1.ask.put(Id, Reg)) }.
+    { Env = Env1.put(ask/Id, Reg) }.
 
 ir_ask_env(Ask, Env) -->
     ir_empty_env(Env1),
     { Env = Env1.put(ask, Ask) }.
 
-/*
-E.reset() := E.put(ask, e{}).put(mod, e{}).put(create,e{}).
-E.add_var(Id, Type) := E.put(var_types, E.var_types.put(Id, Type)).
-E.get_var(Id) := E.var_types.Id.
-
-
-
-E.add_ask(Key, Val) := E :- Val = E.create.get(Key), !.
-E.add_ask(Key, Val) := E :- Val = E.mod.get(Key), !.
-E.add_ask(Key, Val) := E :- Val = E.ask.get(Key).
-E.add_ask(Key, Val) := E.put(ask, E.ask.put(Key, Val)).
-
-E.add_ask(e{}) := E :- !.
-E.add_ask(Ask) := E.add_ask(Key, Val).add_ask(Ask2) :-
-    select_dict(Key, Ask, Val, Ask2).
-
-
-E.add_mod_set(e{}) := E :- !.
-E.add_mod_set(Mod) := E.add_mod(Key, Val).add_mod_set(Mod2) :-
-    select_dict(Key, Mod, Val, Mod2).
-
-E.add_mod(Key, Val) := E2 :-
-    E.create ? get(Key) ->
-      E2 = E.add_create(Key, Val)
-    ; E2 = E.put(mod, E.mod.put(Key, Val)).
-
-E.add_create(Key, Val) := E.put(create, E.create.put(Key,Val)).
-
-*/
 %%%%%%%%%%%%%%%
 %%% MERGING %%%
 %%%%%%%%%%%%%%%
@@ -249,7 +219,7 @@ ir_stmt(ConstEnv, block(Stmts), Env) -->
 
 ir_stmt(ConstEnv, (Id : VarType) = Exp, Env) -->
     ir_exp(ConstEnv, Exp, V, ExpEnv),
-    { Env = ExpEnv.add_to(mod, Id, VarType - V) }.
+    { Env = ExpEnv.put(mod/Id, VarType - V) }.
 
 ir_stmt(_ConstEnv, return, Env) --> [ret], ir_empty_env(Env).
 ir_stmt(ConstEnv, return(RetType, Exp), Env) -->
@@ -262,7 +232,7 @@ ir_stmt(_ConstEnv, decl(_Type, []), Env) --> ir_empty_env(Env).
 ir_stmt(ConstEnv, decl(Type, [ init(Id, Exp) | T ]), Env) -->
     ir_exp(ConstEnv, Exp, V, ExpEnv),
     ir_stmt(ConstEnv, decl(Type,T), StmtEnv),
-    semicolon_merge(ExpEnv.add_to(gen, Id, Type - V), StmtEnv, Env).
+    semicolon_merge(ExpEnv.put(gen/Id, Type - V), StmtEnv, Env).
 
 ir_stmt(ConstEnv, expstmt(Exp), Env) -->
     ir_exp(ConstEnv, Exp, _, Env).
