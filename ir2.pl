@@ -98,47 +98,33 @@ or_merge_phi(Env1, Env2, Key, Key - (Type - Reg)) -->
         (Type - V2 = Env2.mod.get(Key), ! ; Type - V2 = Env2.ask.get(Key))
     }.
 
-/*
-ir_while_merge(PreEnv, PostEnv, NewEnv) -->
-    ir_while_merge_mods(PreEnv, PostEnv.last_block, PostEnv.mod, Env1),
-    { NewEnv = Env1.add_ask(PostEnv.ask) }
+while_merge(StartBlock, WhileEnv, DoEnv, Env) --> {
+    Env = ir2{
+        ask: Ask,
+        mod: Mod,
+        gen: e{}
+        },
+    maplist(fst(-), M, DoEnv.mod.keys()),
+    dict_pairs(D, _, M),
+    Ask set_is WhileEnv.ask - DoEnv.mod + D + (DoEnv.ask - DoEnv.mod)
+    },
+    
+    dcg_map(while_merge_phi(StartBlock, Ask, DoEnv), DoEnv.mod.keys(), NewRegs),
+    
+    {
+        dict_pairs(Mod, e, NewRegs),
+        WhileEnv.ask >:< Mod,
+        DoEnv.ask >:< Mod
+    }
 .
 
-ir_while_merge_mods(PreEnv, ModLabel, Mod, NewEnv) -->
-    { select_dict(K, Mod, V1, Mod2) },
-    { V2 = PreEnv.create.get(K) -> PreEnv2 = PreEnv.add_create(K, V3)
-    ; V2 = PreEnv.mod.get(K) -> PreEnv2 = PreEnv.add_mod(K,V3)
-    ; V2 = PreEnv.ask.get(K) -> PreEnv2 = PreEnv.add_mod(K,V3)
-    ; PreEnv2 = PreEnv.add_ask(K,V2).add_mod(K, V3) },
-    
-    [ V3 = phi(PreEnv.get_var(K), [(V1, ModLabel), (V2, PreEnv.last_block)]) ],
-    ir_while_merge_mods(PreEnv2, ModLabel, Mod2, NewEnv).
-
-ir_while_merge_mods(PreEnv, _, e{}, PreEnv) --> [].
-
-
-ir_merge_if(PreEnv, PostThenEnv, PostElseEnv, NewEnv) -->
-    ir_merge_if_mods(PreEnv.add_ask(PostThenEnv.ask).add_ask(PostElseEnv.ask),
-                             PostThenEnv.last_block, PostThenEnv.mod,
-                             PostElseEnv.last_block, PostElseEnv.mod, NewEnv).
-
-ir_merge_if_mods(PreEnv, Label1, Mod1, Label2, Mod2, NewEnv) -->
-    { select_dict(K, Mod1, V1, NewMod1) },
+while_merge_phi(StartBlock, WhileAsk, DoEnv, Key, Key - (Type - Reg)) -->
+    [ Reg = phi(Type, [(V1, StartBlock), (V2, DoEnv.last_block)]) ],
     {
-        ( select_dict(K, Mod2, V2, NewMod2)
-        ; V2 = PreEnv.create.get(K), NewMod2 = Mod2
-        ; V2 = PreEnv.mod.get(K), NewMod2 = Mod2 ) ->
-            PreEnv1 = PreEnv.add_mod(K, V3)
-    ;
-        PreEnv1 = PreEnv.add_ask(K,V2), NewMod2 = Mod2
-    },
-    [ V3 = phi(PreEnv.get_var(K), [(V1, Label1), (V2, Label2)]) ],
-    ir_merge_if_mods(PreEnv1, Label1, NewMod1, Label2, NewMod2, NewEnv).
+        Type - V1 = WhileAsk.Key,
+        Type - V2 = DoEnv.mod.Key
+    }.
 
-ir_merge_if_mods(PreEnv, _, e{}, _, e{}, PreEnv) --> [].
-ir_merge_if_mods(PreEnv, Label1, e{}, Label2, Mod2, NewEnv) -->
-    ir_merge_if_mods(PreEnv, Label2, Mod2, Label1, e{}, NewEnv).
-*/
 %%%%%%%%%%%%%%%%%%%
 %%% ir %%%
 %%%%%%%%%%%%%%%%%%%
@@ -306,28 +292,32 @@ ir_stmt(ConstEnv, if(If, Then, Else), Env) -->
     }.
     
 
-/*
-ir_stmt(ConstEnv, Env, while(While, Do), NewEnv) -->
-    { EmptyEnv = Env.reset() },
+ir_stmt(ConstEnv, while(While, Do), Env) -->
     
-    [ jump(CondBlock) ],
+    [ jump(StartBlock) ],
+    [ block(StartBlock) ],
+    [ jump(WhileBlock) ],
     
-    ir_block(ConstEnv, EmptyEnv, DoBlock, DoEnv),
-    ir_stmt(ConstEnv, DoEnv, Do, PostDoEnv),
-    [ jump(CondBlock) ],
-    
-    ir_block(ConstEnv, EmptyEnv, CondBlock, _),
-    ir_while_merge(Env, PostDoEnv, MergeEnv),
-    ir_exp(ConstEnv, MergeEnv, While, V, CondEnv),
+    [ block(WhileBlock) ],
+    leave_gap(MergeGap),
+    ir_exp(ConstEnv, While, V, WhileEnv),
     [ if(V, DoBlock, EndBlock) ],
     
-    ir_block(ConstEnv, CondEnv, EndBlock, NewEnv)
+    [ block(DoBlock) ],
+    ir_stmt(ConstEnv, Do, DoEnv),
+    [ jump(WhileBlock) ],
+    
+    [ block(EndBlock) ],
+    
+    {
+        if_possible (WhileEnv.block_known = false -> WhileEnv.last_block = WhileBlock),
+        if_possible (DoEnv.block_known = false -> DoEnv.last_block = DoBlock)
+    },
+    
+    fill_gap(MergeGap, while_merge(StartBlock, WhileEnv, DoEnv, Env1)),
+    
+    { Env = Env1.put(last_block, EndBlock).put(block_known, true) }
 . % while
-
-% ir_stmt(S) --> { writeln(S), fail }.
-
-ir_block(_ConstEnv, Env, Label, Env.put(last_block, Label)) --> [ block(Label) ].
-*/
 
 
 ir_fun_body(ConstEnv, Body, Env) -->
