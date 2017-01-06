@@ -1,18 +1,27 @@
-:- module(parser, [parse/3, tokenize//1]).
+:- module(parser, [parse/2, tokenize//1]).
 :- use_module(library(dcg/basics)).
 
-parse( Type, File, Tree ) :-
-    ( File = '-' ->
-        ( prompt(_, ''),
-          stream_property(user_input, reposition(true)),
-          phrase_from_stream(tokenize(Tokens), user_input)
-        ; fail("reading from stdin failed (note: lazy reading not yet supported"))
-	; phrase_from_file(tokenize(Tokens), File) ),
-	( Type = program, phrase(program(Tree), Tokens) ).
+
+
+parse('-', Tree) :-
+    prompt(_, ''),
+    stream_property(user_input, reposition(true)),
+    
+    ( phrase_from_stream(tokenize(Tokens), user_input)
+    ; throw(stdin_read_fail) ),
+
+    phrase(program(Tree), Tokens), !.
+
+parse(File, Tree) :-
+    File \= '-',
+	phrase_from_file(tokenize(Tokens), File),
+	phrase(program(Tree), Tokens), !.
+
+parse(_File, _Tree) :- throw(parsing_fail).
 
 %%%%%%%%%%%%%
 %%% LEXER %%%
-%%%%%%%%%%%%%
+%%%%%%%%%%%%%	
 
 keywords([ if, else, while, return, true, false, int, string, boolean, void]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",

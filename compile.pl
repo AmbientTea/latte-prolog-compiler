@@ -15,3 +15,4 @@ compile(Opts, Env, Prog, Out) :-
     string_chars(Out, Out1)
 .
 
+compile(_Opts, _Env, _Prog, _Out) :- throw(compilation_fail).

@@ -15,7 +15,7 @@ types(false, boolean, false) --> !.
 types( var(V), Type, var(Type, V) ) -->
     ask_state(get_var(V), VarInfo) ->
         { Type = VarInfo.type }
-    ; { fail("variable ~w not declared", [V]) }.
+    ; { throw(no_decl(V)) }.
 
 %%% OPERATORS %%%
 
@@ -53,13 +53,10 @@ types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_ty
 
 types(app(Fun, Args), Type, app(Fun, NArgs)) -->
     ask_state(functions, FunsInfo),
-    { member(Fun - FunInfo, FunsInfo), ! ; fail("function ~w does not exist", [Fun]) },
+    { member(Fun - FunInfo, FunsInfo) or_else throw(no_function(Fun)) },
     all_type(Args, ArgTypes, NArgs),
     { Type = FunInfo.return },
-    { ArgTypes = FunInfo.args, !
-    ; fail("function ~w takes arguments of types ~w, but got ~w", [Fun, FunInfo.args, ArgTypes]) }.
-
-% types(Env, Exp, T) :- var(T), fail("cannot type expression: ~w~nin env: ~w", [Exp, Env]).
+    { ArgTypes = FunInfo.args or_else throw(bad_args(Fun, FunInfo.args, ArgTypes)) }.
 
 %%%%%%%%%%%%%%%
 %%% HELPERS %%%
@@ -70,6 +67,5 @@ all_type([H|T], [HT|TT], [NH|NT]) --> types(H, HT, NH), all_type(T, TT, NT).
 
 expect_type(Exp, Type, NExp) -->
     types(Exp, EType, NExp),
-    { Type = EType -> true
-    ; fail("expression ~w has type: ~w, expected: ~w", [Exp, EType, Type]) }.
+    { Type = EType or_else throw(bad_type(Exp, EType, Type)) }.
 

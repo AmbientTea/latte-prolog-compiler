@@ -42,11 +42,11 @@ main :-
 	
 	( Args = [File | _]       or_else throw(no_file) ),
 
-	( parse(Cont, File, Tree) or_else throw(parsing_fail) ),
+	parse(File, Tree),
 
-	check(Cont, Tree, Env, NTree),
+	check(_Cont, Tree, Env, NTree),
 
-    ( compile(Opts, Env, NTree, Code) or_else throw(compilation_fail) ),
+    compile(Opts, Env, NTree, Code),
     
     format(user_error, "OK~n", []),
     writeln(Code).

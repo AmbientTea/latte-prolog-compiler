@@ -20,28 +20,28 @@ correct(skip, skip) --> !.
 correct(return, return) -->
     ask_state(return_type, void) ->
         do_state(put(returned, true))
-    ; get_state(S), { fail("void return when ~w expected", [S.return_type]) }.
+    ; get_state(S), { throw(bad_void_return(S.return_type)) }.
     
 correct(return(Exp), return(Type, NExp)) -->
     types(Exp, Type, NExp),
     ( ask_state(return_type, Type) ->
         do_state(put(returned, true))
-    ; get_state(S), { fail("return of type ~w expected but expression ~w of type ~w found", [S.return_type, Exp, Type]) }).
+    ; get_state(S), { throw(bad_return(Type, S.return_type, Exp)) }).
 
 correct(expstmt(Exp), expstmt(NExp)) --> types(Exp, _, NExp).
 
 correct(incr(Id), (Id : int) = var(int, Id) + int(1)) -->
-    ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
-    ; { fail("cannot increment non-integer variable ~w", [Id]) }.
+    ask_state(get_var(Id), VarInfo),
+    { VarInfo.type = int or_else throw(bad_increment(Id, VarInfo.type)) }.
 
 correct(decr(Id), (Id : int) = var(int, Id) - int(1)) -->
-    ask_state(get_var(Id), VarInfo), { VarInfo.type = int }, !
-    ; { fail("cannot decrement non-integer variable ~w", [Id]) }.
+    ask_state(get_var(Id), VarInfo),
+    { VarInfo.type = int or_else throw(bad_decrement(Id, VarInfo.type)) }.
     
 correct(Id = Exp, (Id : VarType) = NExp) -->
     ask_state(get_var(Id), VarInfo), { VarType = VarInfo.type } ->
         expect_type(Exp, VarType, NExp)
-    ; { fail("variable ~w not declared", [Id]) }.
+    ; { throw(not_declared(Id)) }.
 
 
 %%% CONTROL STRUCTURES %%%
@@ -87,7 +87,7 @@ decl_correct(Type, noinit(Id), init(Id, V)) -->
         ; Type = boolean -> V = false
         ; Type = string -> V = str("") },
         do_state(add_var(Id, Type))
-    ; { fail("variable ~w already declared", [Id]) }.
+    ; { throw(dupl_decl(Id)) }.
 
 
 

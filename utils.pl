@@ -4,7 +4,6 @@
     op(500, yfx, ~),
     op(700, xfx, set_is), set_is/2,
     op(1100, xfy, or_else), or_else/2,
-    fail/1, fail/2,
     fst/2, snd/2,
     fst/3, snd/3,
     foldr/4,
@@ -55,9 +54,6 @@ ask_state(A, V) --> get_state(S), { V = S.A }.
 :- module_transparent 'local'//1, 'local'//2.
 local(Instr) --> get_state(S), Instr, put_state(S).
 local(Instr, St) --> get_state(S), Instr, get_state(St), put_state(S).
-
-fail(S, A) :- string_concat(S,"~n",SS), format(user_error, SS, A), fail.
-fail(S) :- fail(S, []).
 
 %%%%%%%%%%%%%%%%%%%
 % List predicates %

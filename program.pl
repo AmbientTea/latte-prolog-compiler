@@ -19,7 +19,7 @@ declare_args([]) --> !.
 declare_args([(Id, Type) | T]) -->  
     ( can_shadow(Id) -> 
         do_state(add_var(Id,Type))
-    ; { fail("argument ~w declared multiple times", [Id]) }),
+    ; { throw(dupl_arg(Id)) }),
     declare_args(T).
 
 correct_functions([], []) --> !.
@@ -39,7 +39,7 @@ correct_function(topdef(Return, Fun, Args, Body),
         ( Return = void ->
             % void functions need explicit return
             append(NBody1, [return], NBody)
-        ; fail("control flow reaches function ~w end without return", [Fun]) )
+        ; throw( no_return(Fun) ) )
     ; NBody = NBody1 }.
 
 
