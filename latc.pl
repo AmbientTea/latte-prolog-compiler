@@ -8,16 +8,14 @@
 
 :- use_module(compile).
 
-
-:- % main
-(
+command_line_arguments(Opts, Args) :-
 	OptSpec =
 		[ [ opt(out)
 		  , type(string)
 		  , default("")
 		  , shortflags([o])
 		  , longflags(['out'])
-		  , help(['output file (compilation only)'])
+		  , help(['output file'])
 		  ]
 		, [ opt(optimize)
 		  , type(atom)
@@ -28,15 +26,17 @@
 		  ]
     	],
 	current_prolog_flag(argv, LineArgs),
-	opt_parse(OptSpec, LineArgs, Opts, Args),
+	opt_parse(OptSpec, LineArgs, Opts, Args).
 
+:- % main
+(
+    command_line_arguments(Opts, Args),
+	
 	(Args = [File | _]       -> true ; fail("no file specified")),
-	( member(out(Out), Opts), Out \= ""
-	; file_name_extension(Base, _, File), file_name_extension(Base, ".out", Out)),
 
 	(parse(Cont, File, Tree) -> true ; fail("parsing failed") ),
 
-	(check(Cont, Tree, Env, NTree) /*-> true ; fail("type check failed")*/),
+	check(Cont, Tree, Env, NTree),
 
     ( compile(Opts, Env, NTree, Code), writeln(Code)
     ; fail("compilation error or some features not implemented yet")),
