@@ -8,6 +8,13 @@
 
 :- use_module(compile).
 
+:- initialization (
+    catch( if_possible main
+         , Exception
+         , (print_message(error, Exception), halt(-1)) ),
+    halt(0)
+).
+
 command_line_arguments(Opts, Args) :-
 	OptSpec =
 		[ [ opt(out)
@@ -28,19 +35,17 @@ command_line_arguments(Opts, Args) :-
 	current_prolog_flag(argv, LineArgs),
 	opt_parse(OptSpec, LineArgs, Opts, Args).
 
-:- % main
-(
+main :-
     command_line_arguments(Opts, Args),
 	
-	(Args = [File | _]       -> true ; fail("no file specified")),
+	(Args = [File | _]       or_else fail("no file specified")),
 
-	(parse(Cont, File, Tree) -> true ; fail("parsing failed") ),
+	(parse(Cont, File, Tree) or_else fail("parsing failed") ),
 
 	check(Cont, Tree, Env, NTree),
 
-    ( compile(Opts, Env, NTree, Code), writeln(Code)
-    ; fail("compilation error or some features not implemented yet")),
-	
-	halt(0)
-) ; /* writeln("something went wrong"), */ halt(-1).
+    ( compile(Opts, Env, NTree, Code)
+    or_else fail("compilation error or some features not implemented yet")),
+    
+    writeln(Code).
 
