@@ -2,6 +2,8 @@
 
 :- use_module(library(optparse)).
 
+:- use_module(exception).
+
 :- use_module(utils).
 :- use_module(parser).
 :- use_module(frontend).
@@ -11,7 +13,7 @@
 :- initialization (
     catch( if_possible main
          , Exception
-         , (print_message(error, Exception), halt(-1)) ),
+         , handle_exception(Exception) ),
     halt(0)
 ).
 
@@ -38,14 +40,14 @@ command_line_arguments(Opts, Args) :-
 main :-
     command_line_arguments(Opts, Args),
 	
-	(Args = [File | _]       or_else fail("no file specified")),
+	( Args = [File | _]       or_else throw(no_file) ),
 
-	(parse(Cont, File, Tree) or_else fail("parsing failed") ),
+	( parse(Cont, File, Tree) or_else throw(parsing_fail) ),
 
 	check(Cont, Tree, Env, NTree),
 
-    ( compile(Opts, Env, NTree, Code)
-    or_else fail("compilation error or some features not implemented yet")),
+    ( compile(Opts, Env, NTree, Code) or_else throw(compilation_fail) ),
     
+    format(user_error, "OK~n", []),
     writeln(Code).
 
