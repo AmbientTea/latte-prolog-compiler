@@ -3,6 +3,7 @@
     op(600, xfy, ?),
     op(500, yfx, ~),
     op(700, xfx, set_is), set_is/2,
+    op(1100, xfy, or_else), or_else/2,
     fail/1, fail/2,
     fst/2, snd/2,
     fst/3, snd/3,
@@ -37,6 +38,8 @@ snd(Op, X, B) :- X =.. [Op, _A, B].
 
 if_possible Clause :- Clause, !.
 if_possible _Clause.
+
+A or_else B :- A -> true ; B.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % DGC State Handling %
