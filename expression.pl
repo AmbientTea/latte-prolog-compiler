@@ -66,6 +66,6 @@ all_type([], [], []) --> [].
 all_type([H|T], [HT|TT], [NH|NT]) --> types(H, HT, NH), all_type(T, TT, NT).
 
 expect_type(Exp, Type, NExp) -->
-    types(Exp, EType, NExp),
-    { Type = EType or_else throw(bad_type(Exp, EType, Type)) }.
+    types(Exp, ExpType, NExp),
+    { Type = ExpType or_else throw(bad_type(Exp, Type, ExpType)) }.
 
