@@ -10,6 +10,7 @@ correct_program(Program, NProgram) -->
 
 declare_fun(topdef(Return, Fun, Args, _)) -->
     get_state(Env),
+    { \+ member(Fun - _, Env.functions) or_else throw(dupl_fun(Fun)) },
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 

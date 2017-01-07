@@ -55,6 +55,8 @@ exception_message(void_exp_return) -->
     "void expression as return value".
 
 % program
+exception_message(dupl_fun(Fun)) -->
+    "illegal redefinition of function ", atom(Fun).
 exception_message(void_arg(Id)) -->
     "void argument ", atom(Id).
 exception_message(no_return(Fun)) -->
