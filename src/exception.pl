@@ -51,6 +51,8 @@ exception_message(bad_increment(Id, Type)) -->
     "cannot decrement variable ", atom(Id), " of type ", atom(Type).
 exception_message(void_decl(Decls)) -->
     "void variables declared: ", atom(Decls).
+exception_message(void_exp_return) -->
+    "void expression as return value".
 
 % program
 exception_message(void_arg(Id)) -->

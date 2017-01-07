@@ -21,6 +21,10 @@ correct(return, return) -->
     ask_state(return_type, void) ->
         do_state(put(returned, true))
     ; get_state(S), { throw(bad_void_return(S.return_type)) }.
+
+correct(return(_Exp), _NRet) -->
+    ask_state(return_type, void),
+    { throw(void_exp_return) }.
     
 correct(return(Exp), return(Type, NExp)) -->
     types(Exp, Type, NExp),
