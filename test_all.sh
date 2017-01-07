@@ -6,7 +6,8 @@ function test_bad() {
     
     echo $HEADER:
     for file in `ls $DIR/*.lat`; do
-    echo $file ...  `./latc $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
+    printf "%-60s ... " $file
+    echo `./latc $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
     done;
 }
 
@@ -19,7 +20,7 @@ function test_good() {
     
     for file in `ls $DIR/*.lat`; do
         out=`dirname $file`/`basename $file .lat`.output
-        echo -n "compile $file ... "
+        printf "compile %-60s ... " $file
         
         PROG=`./latc $file 2> >(head -n 1 | tr -d "\n" 1>&2 )`
         if [ $? != 0 ]; then exit; fi
