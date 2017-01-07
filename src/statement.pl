@@ -66,7 +66,9 @@ correct(if(If, Then, Else), if(NIf, NThen, NElse)) -->
     merge_return(S1, S2).
 
 correct(while(true, Do), while(true, NDo)) -->
-    !, pushed correct(Do, NDo).
+    !, pushed correct(Do, NDo),
+    % no 'break' instruction so return not needed
+    do_state put(returned, true).
 
 correct(while(While, Do), while(NWhile,NDo)) -->
     expect_type(While, boolean, NWhile),
