@@ -51,6 +51,8 @@ exception_message(bad_increment(Id, Type)) -->
     "cannot decrement variable ", atom(Id), " of type ", atom(Type).
 
 % program
+exception_message(void_arg(Id)) -->
+    "void argument ", atom(Id).
 exception_message(no_return(Fun)) -->
     "control flow reaches function ", atom(Fun), " end without return".
 exception_message(dupl_arg(Arg)) -->

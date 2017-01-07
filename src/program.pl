@@ -16,6 +16,8 @@ declare_fun(topdef(Return, Fun, Args, _)) -->
 %%%%%
 
 declare_args([]) --> !.
+
+declare_args([(Id, void) | _]) -->  { throw(void_arg(Id)) }.
 declare_args([(Id, Type) | T]) -->  
     ( can_shadow(Id) -> 
         do_state(add_var(Id,Type))
