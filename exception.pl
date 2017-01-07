@@ -14,6 +14,12 @@ exception_message(compilation_failed) --> "complation failed".
 
 
 % PARSER
+exception_message(tokenize_fail(Line)) -->
+    "unrecognized token at line ", atom(Line).
+exception_message(unclosed_comment(Line)) -->
+    "unclosed multiline comment starting at line ", atom(Line).
+exception_message(unopened_comment(Line)) -->
+    "unmatched multiline comment close at ", atom(Line).
 exception_message(stdin_read_fail) -->
     "reading from stdin failed (note: lazy reading not yet supported)".
 exception_message(parsing_fail) --> "parsing failed".

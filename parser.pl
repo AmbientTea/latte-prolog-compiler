@@ -39,16 +39,32 @@ token(T) --> {operator(Tok)}, Tok, !, {atom_codes(T, Tok)}.
 token(T) --> integer(T), !.
 token(T) --> id(Id), { keywords(KS), (member(Id, KS) -> T = Id ; T = id(Id))}.
 
+tokenize(Tok) --> tokenize(Tok, 1), !.
 
 % comments
-tokenize(Tok) --> "/*", !, string(_), "*/", !, tokenize(Tok).
-tokenize(Tok) --> "//", !, string(_), "\n", !, tokenize(Tok).
-tokenize(Tok) --> "#", !, string(_), "\n", !, tokenize(Tok).
+tokenize(_Tok, Line) --> "*/", { throw(unopened_comment(Line)) }.
+tokenize(Tok, Line) -->
+    "/*", !, (string(Skip), "*/" ; { throw(unclosed_comment(Line)) } ), !,
+    {
+        include('='(10), Skip, NLS),
+        length(NLS, NP),
+        NewLine is Line + NP
+    },
+    tokenize(Tok, NewLine).
+tokenize(Tok, Line) -->
+    "//", !, string(_), "\n", !,
+    { NewLine is Line+1 },
+    tokenize(Tok, NewLine).
+tokenize(Tok, Line) -->
+    "#", !, string(_), "\n", !,
+    { NewLine is Line+1 },
+    tokenize(Tok, NewLine).
 
-tokenize(X) --> blank, !, tokenize(X).
-tokenize([Tok | Tail]) --> token(Tok), !, tokenize(Tail).
-tokenize([]) --> [], !.
-
+tokenize(X, Line) --> "\n", !, { NewLine is Line+1 }, tokenize(X, NewLine).
+tokenize(X, Line) --> white, !, tokenize(X, Line).
+tokenize([Tok | Tail], Line) --> token(Tok), !, tokenize(Tail, Line).
+tokenize([], _Line) --> eos.
+tokenize(_, Line) --> { throw(tokenize_fail(Line)) }.
 %%%%%%%%%%%%%%
 %%% PARSER %%%
 %%%%%%%%%%%%%%
