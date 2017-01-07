@@ -2,7 +2,8 @@
 
 :- use_module(library(dialect/hprolog)).
 
-:- use_module(common).
+:- op(600, xfy, <=).
+X <= Y :- X =< Y.
 
 peephole(BlockInfo, [ V = E | T]) -->
     { E =.. [Op, V1, V2], member(Op, [+,-,*]),
