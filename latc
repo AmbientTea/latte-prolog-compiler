@@ -11,5 +11,9 @@ fi;
 
 echo $OUT
 
-src/latc.pl $IN | llvm-as | llvm-link - lib/runtime.bc -o $OUT &&
-    chmod +x $OUT
+LLF=`dirname $OUT`/`basename $OUT .out`.ll
+BCF=`dirname $OUT`/`basename $OUT .out`.bc
+
+src/latc.pl $IN > $LLF
+llvm-as < $LLF > $BCF
+llvm-link $BCF lib/runtime.bc -o $OUT && chmod +x $OUT
