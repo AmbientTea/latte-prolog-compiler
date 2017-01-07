@@ -26,6 +26,8 @@ exception_message(parsing_fail) --> "parsing failed".
 
 % FRONTEND
 % expressions
+exception_message(int_too_big(I)) -->
+    "numeric constant too big for integer type: ", atom(I).
 exception_message(not_declared(Var)) -->
     "variable ", atom(Var), " not declared".
 exception_message(bad_args(Fun, ExpectedTypes, ArgTypes)) -->

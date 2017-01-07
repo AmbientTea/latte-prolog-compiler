@@ -6,7 +6,9 @@
 
 
 %%% PRIMITIVE TYPES %%%%
-types(int(I), int, int(I)) --> !.
+types(int(I), int, int(I)) -->
+    { between(-2147483648, 2147483647, I) or_else throw(int_too_big(I)) }.
+
 types(str(S), string, str(S)) --> do_state add_string(S).
 types(true, boolean, true) --> !.
 types(false, boolean, false) --> !.
