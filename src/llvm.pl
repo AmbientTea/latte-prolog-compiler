@@ -64,6 +64,7 @@ operator(>, "icmp sgt", "i32", "i1").
 operator(<, "icmp slt", "i32", "i1").
 operator(>, "icmp sgt", "i32", "i1").
 operator('<=', "icmp sle", "i32", "i1").
+operator('>=', "icmp sge", "i32", "i1").
 
 % functions
 topdef(function(Type, Fun, Args, Body)) -->
