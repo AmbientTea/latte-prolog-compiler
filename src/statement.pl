@@ -76,6 +76,10 @@ correct(while(While, Do), while(NWhile,NDo)) -->
 
 
 %%% DECLARATIONS %%%
+
+correct(decl(void, Decls), _NDecls) -->
+    { throw(void_decl(Decls)) }.
+
 correct(decl(Type, Decls), decl(Type, NDecls)) -->
     dcg_map( decl_correct(Type), Decls, NDecls).
 
