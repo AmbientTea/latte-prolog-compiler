@@ -13,7 +13,8 @@
 :- op(600, xfy, '||').
 
 % each construction when compiled returns all its dependencies to the outside
-% to allow for completely independent 
+% to allow for compilation to SSA form independent from local environment. Only
+% global one is passed around.
 % sets need uniform e tag for unification
 empty_deps(ir2{
     % All three sets follow the format: Variable: Type - Register
