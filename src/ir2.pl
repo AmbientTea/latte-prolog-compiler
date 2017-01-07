@@ -344,7 +344,7 @@ function_declaration(Fun - FunInfo) -->
     [ decl(Fun, FunInfo.return, FunInfo.args) ].
 
 string_declaration(Str1 - Lab - Len) -->
-    { string_concat(Str1, "\\00", Str) },
+    { string_concat(Str1, "\0", Str) },
     [ string(Str, Lab, Len) ].
 
 

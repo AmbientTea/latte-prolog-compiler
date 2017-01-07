@@ -53,6 +53,22 @@ args(Args) --> separated(", ", fun_arg, Args).
 
 phi_arg((V, Lab)) --> "[", atom(V), ", %", atom(Lab), "]".
 
+% strings
+llvm_string([C|T]) -->
+    { atom_codes(A, [C]) },
+    (
+        % LLVM uses ASCII hex codes as escape values
+          { A = '\n' } -> "\\0A"
+        ; { A = '\t' } -> "\\09"
+        ; { A = '\e' } -> "\\1B"
+        ; { A = '\a' } -> "\\07"
+        ; { A = '\"' } -> "\\22"
+        ; { A = '\\' } -> "\\5C"
+        ; { A = '\0' } -> "\\00"
+        ;  [C]
+    ), llvm_string(T).
+llvm_string([]) --> [].
+
 % operator info
 operator(+, "add", "i32", "i32").
 operator(-, "sub", "i32", "i32").
@@ -74,7 +90,8 @@ topdef(function(Type, Fun, Args, Body)) -->
 topdef(decl(Fun, Type, Args)) -->
     "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
 topdef(string(Str, Lab, Len)) -->
-    atom(Lab), " = private constant [", atom(Len), " x i8] c\"", atom(Str), "\", align 1\n".
+    atom(Lab), " = private constant [", atom(Len), " x i8] c\"",
+    { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
 
 indent(block(_)) --> "".
 indent(_) --> "    ".

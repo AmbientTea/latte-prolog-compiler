@@ -34,12 +34,26 @@ id_cont([]) --> "".
 keyword(K) :- keywords(Keys), member(K, Keys).
 operator(O) :- operators(Ops), member(O, Ops).
 
-token(str(T)) --> "\""	, string(S), "\"", !, {string_chars(T, S)}.
+token(str(T)) --> "\""	, string_with_escapes(S), "\"", !, {string_chars(T, S)}.
 token(T) --> {operator(Tok)}, Tok, !, {atom_codes(T, Tok)}.
 token(T) --> integer(T), !.
 token(T) --> id(Id), { keywords(KS), (member(Id, KS) -> T = Id ; T = id(Id))}.
 
 tokenize(Tok) --> tokenize(Tok, 1), !.
+
+
+string_with_escapes([]) --> [].
+string_with_escapes([C | T]) -->
+    "\\", (
+        "n" -> { atom_codes('\n', [C]) }
+      ; "t" -> { atom_codes('\t', [C]) }
+      ; "e" -> { atom_codes('\e', [C]) }
+      ; "a" -> { atom_codes('\a', [C]) }
+      ; "\"" -> { atom_codes('\"', [C]) }
+      ; "\\" -> { atom_codes('\\', [C]) }
+    ), string_with_escapes(T).
+
+string_with_escapes([C | T]) --> [C], string_with_escapes(T).
 
 % comments
 tokenize(_Tok, Line) --> "*/", { throw(unopened_comment(Line)) }.
