@@ -1,4 +1,4 @@
-#!/usr/bin/prolog -q
+#!/usr/bin/swipl -q
 
 :- use_module(library(optparse)).
 
