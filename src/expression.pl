@@ -15,7 +15,7 @@ types(false, boolean, false) --> !.
 types( var(V), Type, var(Type, V) ) -->
     ask_state(get_var(V), VarInfo) ->
         { Type = VarInfo.type }
-    ; { throw(no_decl(V)) }.
+    ; { throw(not_declared(V)) }.
 
 %%% OPERATORS %%%
 
