@@ -47,7 +47,7 @@ exception_message(bad_void_return(ExpectedRet)) -->
     "return of type ", atom(ExpectedRet), " expected but void return found".
 exception_message(bad_increment(Id, Type)) -->
     "cannot increment variable ", atom(Id), " of type ", atom(Type).
-exception_message(bad_increment(Id, Type)) -->
+exception_message(bad_decrement(Id, Type)) -->
     "cannot decrement variable ", atom(Id), " of type ", atom(Type).
 exception_message(void_decl(Decls)) -->
     "void variables declared: ", atom(Decls).
