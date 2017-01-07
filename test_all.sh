@@ -39,6 +39,7 @@ function test_good() {
 echo ========== FRONTEND TESTS: =============
 test_bad "tests/bad/" "BASIC"
 test_bad "tests/mrjp-tests/bad/semantic" "COMMUNITY BASIC"
+test_bad "tests/mrjp-tests/bad/runtime" ""
 
 echo ========== COMPILER TESTS: =============
 test_good "tests/good/" "BASIC"

@@ -1,7 +1,7 @@
 /* Fibonacci. */
 
 int main () {
-  int po,lo,hi,mx ;
+  int lo,hi,mx ;
   lo = 1 ;
   hi = lo ;
   mx = 5000000 ;
