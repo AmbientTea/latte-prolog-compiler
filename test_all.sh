@@ -24,7 +24,14 @@ function test_good() {
         PROG=`./latc $file 2> >(head -n 1 | tr -d "\n" 1>&2 )`
         if [ $? != 0 ]; then exit; fi
         
-        echo " ..." `$PROG | diff -s -q - $out | grep -o "\(differ\|identical\)"`
+        IN=`dirname $file`/`basename $file .lat`.input
+        if [ -e "$IN" ]; then
+            IND="$IN"
+        else
+            IND=/dev/zero
+        fi
+        
+        echo " ..." `$PROG < $IND | diff -s -q - $out | grep -o "\(differ\|identical\)"`
     done;
 }
 
