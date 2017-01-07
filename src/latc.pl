@@ -44,7 +44,7 @@ main :-
 
 	parse(File, Tree),
 
-	check(_Cont, Tree, Env, NTree),
+	check(Tree, Env, NTree),
 
     compile(Opts, Env, NTree, Code),
     
