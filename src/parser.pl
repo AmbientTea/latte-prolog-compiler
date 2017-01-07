@@ -28,7 +28,7 @@ operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "
             "=", "<=", "<", ">=", ">", "||", "&&", "!", ","]).
 
 id(Id) --> [Start], { code_type(Start, alpha) }, id_cont(Cont), { atom_codes(Id, [Start | Cont]) }.
-id_cont([H|T]) --> [H], { code_type(H, alnum) }, id_cont(T).
+id_cont([H|T]) --> [H], { code_type(H, csym) }, id_cont(T).
 id_cont([]) --> "".
 
 keyword(K) :- keywords(Keys), member(K, Keys).
