@@ -2,7 +2,7 @@
 
 echo ========== testing frontend: =============
 for file in `ls bad/*.lat`; do
-    echo $file ...  `./latc.pl $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
+    echo $file ...  `./latc $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
 done;
 
 if [ "$1" == "" ] || [ "$1" == "compiler" ] || [ "$1" == "all" ]; then
