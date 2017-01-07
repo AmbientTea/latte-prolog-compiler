@@ -19,6 +19,9 @@ types( var(V), Type, var(Type, V) ) -->
 
 %%% OPERATORS %%%
 
+types(neg(Exp), int, int(0) - NExp) -->
+    expect_type(Exp, int, NExp).
+
 types( E1 + E2, string, NE1 ++ NE2 ) -->
 	types(E1, string, NE1), !,
 	expect_type(E2, string, NE2).

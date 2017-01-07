@@ -140,7 +140,7 @@ exp(E) --> orexp(E).
 % simple
 sexp(E) --> ['('], !, exp(E), [')'], !.
 sexp(int(I)) --> [I], { integer(I) }, !.
-sexp(int(I)) --> [-, IN], { integer(IN), I is -IN }, !.
+sexp(neg(Exp)) --> [-], sexp(Exp), !.
 sexp(str(S)) --> [str(S)], !.
 sexp(app(Fun, Args)) --> [id(Fun), '('], !, exps(Args), [')'].
 sexp(var(V)) --> [id(V)], !.
