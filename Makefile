@@ -1,6 +1,9 @@
-all:
+all: lib/runtime.bc
 
 clean:
-	find tests -type f -name '*.ll' -delete
-	find tests -type f -name '*.bc' -delete
-	find tests -type f -name '*.out' -delete
+	find . -type f -name '*.ll' -delete
+	find . -type f -name '*.bc' -delete
+	find . -type f -name '*.out' -delete
+
+lib/runtime.bc:
+	llvm-as lib/stdlib.llvm -o lib/runtime.bc
