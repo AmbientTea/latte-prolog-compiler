@@ -7,7 +7,7 @@
 :- use_module(library(dcg/basics)).
 :- use_module(library(dialect/hprolog)).
 
-:- use_module(peephole).
+:- use_module(scan).
 :- use_module(optimize_blocks).
 
 %%%%%%%%%%%%%%
@@ -49,7 +49,7 @@ get_block_info(Block, [ _ = phi(_, [(_, Lab1), (_, Lab2)]) | T ]) -->
 get_block_info(CurBlock, [_|T]) --> get_block_info(CurBlock, T).
 
 
-% divide by blocks
+% blocks(?GroupedBlocks) <--> continous instructions
 blocks([]) --> [].
 blocks([B|T]) --> block(B), blocks(T).
 
@@ -84,16 +84,19 @@ optimize_blocks(Info, [H | T]) --> optimize_block(Info, H), optimize_blocks(Info
 
 % single block optimization
 optimize_block(BlocksInfo, (Label, _, _)) -->
+    % unreachable block
     { \+ memberchk_eq(Label, BlocksInfo.jump_targets),
       BlocksInfo.start_block \== Label }.
 
 optimize_block(BlocksInfo, (Label1, [], jump(Label2))) -->
+    % redundant empty block
     { Label1 \== BlocksInfo.start_block, Label1 \== Label2,
       \+ memberchk_eq(Label1 -> Label2, BlocksInfo.phi_targets),
       Label1 = Label2 }.
 
 optimize_block(BlocksInfo, (Label, Body, End)) -->
-    { peephole(BlocksInfo.put(block, Label), Body, OptBody, []) },
+    % optimize block body and jump
+    { scan(BlocksInfo.put(block, Label), Body, OptBody, []) },
     { End = if(If, Left, Right) ->
         ( If == 0 -> OptEnd = jump(Right)
         ; If == 1 -> OptEnd = jump(Left)

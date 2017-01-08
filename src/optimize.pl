@@ -18,7 +18,7 @@ optimize(Prog, OptProg) :-
     
     append([ Decls, OptStrings, OptFunctions], OptProg).
 
-
+% divide(?Strings, ?Functions, ?FunDecls) <--> Strings ++ Functions ++ FunDecls
 divide([], [], []) --> [].
 divide([Str | Strs], Funs, Decls) -->
     [Str], { Str =.. [string | _] },
@@ -30,7 +30,7 @@ divide(Strs, Funs, [Decl | Decls]) -->
     [Decl], { Decl =.. [decl | _] },
     divide(Strs, Funs, Decls).
 
-
+% merge duplicate string constants
 optimize_strings([], []).
 optimize_strings([H | T], TT) :- member(H, T), optimize_strings(T, TT).
 optimize_strings([H | T], [H | TT]) :- optimize_strings(T, TT).
@@ -39,7 +39,8 @@ optimize_strings([H | T], [H | TT]) :- optimize_strings(T, TT).
 % FUNCTION OPTIMIZATION %
 %%%%%%%%%%%%%%%%%%%%%%%%%
 
-optimize_function(function(Type,Fun,Args,Body), function(Type,Fun,Args,OptBody)) :-
+optimize_function(function(Type,Fun,Args,Body),
+                  function(Type,Fun,Args,OptBody)) :-
     blocks(Blocks0, Body, []),
     optimize_blocks(Blocks0, Blocks),
     blocks(Blocks, OptBody, []).
