@@ -144,8 +144,8 @@ exp(_Env, true, 1, Dep) -->
     empty_deps(Dep).
 
 exp(Env, str(Str), V, Dep) -->
-    { member(Str - StrLab - Len, Env.strings) },
-    [ V = strcast(Len, StrLab) ],
+    { member(Str - StrLab - Len - Index, Env.strings) },
+    [ V = strcast(Len, StrLab, Index) ],
     empty_deps(Dep).
 
 exp(_Env, var(VarType, Id), Reg, Dep) -->
@@ -344,9 +344,10 @@ function_declaration(_Fun - FunInfo) -->
 function_declaration(Fun - FunInfo) -->
     [ decl(Fun, FunInfo.return, FunInfo.args) ].
 
-string_declaration(Str1 - Lab - Len) -->
+string_declaration(Str1 - Lab - Len - Ind) -->
     { string_concat(Str1, "\0", Str) },
-    [ string(Str, Lab, Len) ].
+    % we include blank index variable for possible suffix optimization
+    [ string(Str, Lab, Len, Ind) ].
 
 
 

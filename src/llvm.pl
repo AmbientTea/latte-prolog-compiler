@@ -15,8 +15,9 @@ compile(In, Out) :-
 
 inst(Prog) :- foldl(inst_topdef, Prog, 0, _).
 
-inst_topdef(string(Str, Lab, Len), C, C1) :-
+inst_topdef(string(Str, Lab, Len, Ind), C, C1) :-
     string_length(Str, Len),
+    if_possible (Ind = 0),
     atomic_concat('@str', C, Lab), C1 is C+1.
 
 inst_topdef(function(_, _, Args, Body), C, C) :-
@@ -24,7 +25,7 @@ inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_instr, Body, (0,1), _).
 
 inst_topdef(decl(_, _, _), C, C).
-inst_topdef(string(_, _, _), C, C).
+inst_topdef(string(_, _, _,_), C, C).
 
 inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
@@ -91,9 +92,13 @@ topdef(function(Type, Fun, Args, Body)) -->
     "\n}\n". 
 topdef(decl(Fun, Type, Args)) -->
     "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
-topdef(string(Str, Lab, Len)) -->
+
+topdef(string(Str, Lab, Len, 0)) --> !,
     atom(Lab), " = private constant [", atom(Len), " x i8] c\"",
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
+
+% suffix substring
+topdef(string(_Str, _Lab, _Len, _Ind)) --> [].
 
 indent(block(_)) --> "".
 indent(_) --> "    ".
@@ -128,8 +133,13 @@ rightval(phi(Type, Args)) -->
 rightval(call(Type, Fun, Args)) -->
     "call ", type(Type), " @", atom(Fun), "(", args(Args), ")".
 
-rightval(strcast(Len, Lab)) -->
+rightval(strcast(Len, Lab, 0)) -->
     "bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
+
+% complex constant expression to access a suffix of a string
+%0 = getelementptr i8, i8* bitcast ([8 x i8]* @str0 to i8*), i32 1
+rightval(strcast(Len, Lab, Ind)) -->
+    "getelementptr i8, i8* bitcast ([", atom(Len), " x i8]* ", atom(Lab), " to i8*), i32 ", atom(Ind).
 
 rightval(OpE) -->
     { OpE =.. [Op, V1, V2], operator(Op, LLOp, InT, _) },
