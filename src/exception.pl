@@ -10,6 +10,8 @@ handle_exception(Ex) :-
     halt(1).
 
 exception_message(no_file) --> "no file specified".
+exception_message(file_missing(File)) -->
+    "file ", atom(File), " does not exist".
 exception_message(compilation_failed) --> "complation failed".
 
 

@@ -1,5 +1,6 @@
 #!/usr/bin/swipl -q
 
+:- use_module(library(dialect/sicstus/system)).
 :- use_module(library(optparse)).
 
 :- use_module(exception).
@@ -40,7 +41,8 @@ command_line_arguments(Opts, Args) :-
 main :-
     command_line_arguments(Opts, Args),
 	
-	( Args = [File | _]       or_else throw(no_file) ),
+	( Args = [File | _] or_else throw(no_file) ),
+	( file_exists(File) or_else throw(file_missing(File))),
 
 	parse(File, Tree),
 
