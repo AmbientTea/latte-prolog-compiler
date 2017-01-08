@@ -28,8 +28,7 @@ M.push() := M.put(stack, [vars{} | M.stack]).
 M.pop() := M.put(stack, Stack) :- M.stack = [_ | Stack].
 
 M.add_string(Str) := M.put(strings, SS) :-
-    string_length(Str, Len1), Len is Len1 + 1,
-    union([Str - _ - Len], M.strings, SS).
+    union([Str - _Label - _Length], M.strings, SS).
 
 M.add_var(Id, Type) := M.put(stack, Stack) :- 
     VarInfo = var{ type : Type },

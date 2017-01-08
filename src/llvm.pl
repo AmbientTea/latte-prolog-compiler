@@ -15,7 +15,9 @@ compile(In, Out) :-
 
 inst(Prog) :- foldl(inst_topdef, Prog, 0, _).
 
-inst_topdef(string(_, Lab, _), C, C1) :- atomic_concat('@str', C, Lab), C1 is C+1.
+inst_topdef(string(Str, Lab, Len), C, C1) :-
+    string_length(Str, Len),
+    atomic_concat('@str', C, Lab), C1 is C+1.
 
 inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_arg, Args, 1, _),
