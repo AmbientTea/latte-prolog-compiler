@@ -1,4 +1,4 @@
-#!/usr/bin/swipl -q
+#!/usr/bin/env swipl
 
 :- use_module(library(dialect/sicstus/system)).
 :- use_module(library(optparse)).
