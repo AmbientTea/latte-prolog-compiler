@@ -203,30 +203,29 @@ cond(Env, not(Exp), LabTrue, LabFalse, Dep) -->
 
 
 cond(Env, E1 && E2, LabTrue, LabFalse, Dep) -->
-    exp(Env, E1, V1, Dep1),
-    [ if(V1, Second, LabFalse) ],
+    cond(Env, E1, Second, LabFalse, Dep1),
     
     [ block(Second) ],
-    exp(Env, E2, V2, Dep2),
+    cond(Env, E2, LabTrue, LabFalse, Dep2),
     { Dep2.block_in = Second },
-    
-    [ if(V2, LabTrue, LabFalse) ],
     
     expression_merge(Dep1, Dep2, Dep3),
     { Dep = Dep3.put(block_out, _BlockOut) }.
 
 cond(Env, E1 '||' E2, LabTrue, LabFalse, Dep) -->
-    exp(Env, E1, V1, Dep1),
-    [ if(V1, LabTrue, Second) ],
+    cond(Env, E1, LabTrue, Second, Dep1),
     
     [ block(Second) ],
-    exp(Env, E2, V2, Dep2),
+    cond(Env, E2, LabTrue, LabFalse, Dep2),
     { Dep2.block_in = Second },
 
-    [ if(V2, LabTrue, LabFalse) ],
-    
     expression_merge(Dep1, Dep2, Dep3),
     { Dep = Dep3.put(block_out, _BlockOut) }.
+
+
+cond(_Env, var(VarType, Id), LabTrue, LabFalse, Dep) -->
+    ask_dep(Id, VarType - Reg, Dep),
+    [ if(Reg, LabTrue, LabFalse) ].
 
 cond(Env, Exp, LabTrue, LabFalse, Dep) -->
     exp(Env, Exp, V, Dep),
