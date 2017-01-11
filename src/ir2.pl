@@ -231,6 +231,17 @@ cond(Env, Exp, LabTrue, LabFalse, Dep) -->
     exp(Env, Exp, V, Dep),
     [ if(V, LabTrue, LabFalse) ].
 
+%%%%%%%%%%%%%%%
+% LEFT VALUES %
+%%%%%%%%%%%%%%%
+
+leftval(_Env, var(Type, Id), reg(Reg), Dep) -->
+    empty_deps(Empty),
+    { Dep = Empty.put(mod/Id, Type - Reg) }.
+
+
+store(reg(Reg), Val) --> { Reg = Val }.
+
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
@@ -247,6 +258,12 @@ stmt(_Env, skip, Dep) --> empty_deps(Dep).
 stmt(Env, block(Stmts), Dep) -->
     stmts(Env, Stmts, StmtDep),
     { Dep = StmtDep.put(gen, e{}) }.
+
+stmt(Env, LeftVal = Exp, Dep) -->
+    exp(Env, Exp, Val, ExpDep),
+    leftval(Env, LeftVal, Target, LeftDep),
+    store(Target, Val),
+    semicolon_merge(ExpDep, LeftDep, Dep).
 
 stmt(Env, (Id : VarType) = Exp, Dep) -->
     exp(Env, Exp, V, ExpDep),

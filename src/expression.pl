@@ -1,6 +1,7 @@
 :- module(expression, [types//3, expect_type//3, types//3]).
 :- use_module(utils).
 :- use_module(environment).
+:- use_module(leftval).
 
 :- op(600, xfy, ++).
 
@@ -14,10 +15,8 @@ types(true, boolean, true) --> !.
 types(false, boolean, false) --> !.
 
 %%% VARIABLES %%%
-types( var(V), Type, var(Type, V) ) -->
-    ask_state(get_var(V), VarInfo) ->
-        { Type = VarInfo.type }
-    ; { throw(not_declared(V)) }.
+types( LeftVal, Type, NLeftVal ) -->
+    leftval(LeftVal, Type, NLeftVal).
 
 %%% OPERATORS %%%
 

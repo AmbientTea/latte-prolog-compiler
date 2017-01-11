@@ -4,6 +4,7 @@
 :- use_module(environment).
 :- use_module(expression).
 :- use_module(library(dcg/basics)).
+:- use_module(leftval).
 
 
 corrects([], []) --> !.
@@ -34,19 +35,17 @@ correct(return(Exp), return(Type, NExp)) -->
 
 correct(expstmt(Exp), expstmt(NExp)) --> types(Exp, _, NExp).
 
-correct(incr(Id), (Id : int) = var(int, Id) + int(1)) -->
+correct(incr(Id), var(int, Id) = var(int, Id) + int(1)) -->
     ask_state(get_var(Id), VarInfo),
     { VarInfo.type = int or_else throw(bad_increment(Id, VarInfo.type)) }.
 
-correct(decr(Id), (Id : int) = var(int, Id) - int(1)) -->
+correct(decr(Id), var(int, Id) = var(int, Id) - int(1)) -->
     ask_state(get_var(Id), VarInfo),
     { VarInfo.type = int or_else throw(bad_decrement(Id, VarInfo.type)) }.
     
-correct(Id = Exp, (Id : VarType) = NExp) -->
-    ask_state(get_var(Id), VarInfo), { VarType = VarInfo.type } ->
-        expect_type(Exp, VarType, NExp)
-    ; { throw(not_declared(Id)) }.
-
+correct(LeftVal = Exp, NLeftVal = NExp) -->
+    leftval(LeftVal, LType, NLeftVal),
+    expect_type(Exp, LType, NExp).
 
 %%% CONTROL STRUCTURES %%%
 correct(block(Stmts), block(NStmts)) --> pushed corrects(Stmts, NStmts).

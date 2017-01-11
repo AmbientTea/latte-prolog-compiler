@@ -14,7 +14,9 @@ parse('-', Tree) :-
 
 parse(File, Tree) :-
     File \= '-',
+    % format(user_error, "tokenizing...~n", []),
 	phrase_from_file(tokenize(Tokens), File),
+    % format(user_error, "parsing...~n", []),
 	phrase(program(Tree), Tokens), !.
 
 parse(_File, _Tree) :- throw(parsing_fail).
@@ -119,7 +121,7 @@ stmt( skip ) --> [;], !.
 
 stmt( decl(Type, Ins) ) --> type(Type), inits(Ins), [;].
 
-stmt( =(Id, Exp) ) --> [id(Id), =], exp(Exp), [;].
+stmt( =(Left, Exp) ) --> leftval(Left), [=], exp(Exp), [;].
 
 stmt(if(If, Then, Else)) --> [if, '('], exp(If), [')'], stmt(Then), [else], stmt(Else).
 stmt(if(If, Then)) --> [if, '('], exp(If), [')'], stmt(Then).
@@ -139,6 +141,12 @@ stmt(expstmt(Exp)) --> exp(Exp), [;].
 % type
 types([void, int, boolean, string]).
 type(T) --> { types(Tps), member(T, Tps) }, [T].
+
+%
+% LEFT VALUES %
+%
+
+leftval(var(Id)) --> [ id(Id) ].
 
 %%%%%%%%%%%%%%%%%%%
 %%% expressions %%%
