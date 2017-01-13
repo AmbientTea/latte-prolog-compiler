@@ -9,6 +9,9 @@ handle_exception(Ex) :-
     format(user_error, "ERROR~n~s~n", [Message]),
     halt(1).
 
+exception_message(not_implemented(Feature)) -->
+    "feature: ", atom(Feature), " not implemented".
+
 exception_message(no_file) --> "no file specified".
 exception_message(file_missing(File)) -->
     "file ", atom(File), " does not exist".
