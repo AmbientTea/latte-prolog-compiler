@@ -6,7 +6,7 @@
 correct_program(Program, NProgram) -->
     { emptyenv(Env) }, put_state(Env),
     dcg_map(declare_top, Program), !,
-    correct_functions( Program, NProgram).
+    dcg_map(correct_function, Program, NProgram).
 
 declare_top(fun_def(Return, Fun, Args, _)) -->
     get_state(Env),
@@ -16,22 +16,15 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
 
 %%%%%
 
-declare_args([]) --> !.
-
-declare_args([(Id, void) | _]) -->  { throw(void_arg(Id)) }.
-declare_args([(Id, Type) | T]) -->  
-    ( can_shadow(Id) -> 
-        do_state(add_var(Id,Type))
-    ; { throw(dupl_arg(Id)) }),
-    declare_args(T).
-
-correct_functions([], []) --> !.
-correct_functions([H|T], [HH|TT]) --> pushed correct_function(H,HH), !, correct_functions(T, TT).
+declare_arg((Id, void)) -->  { throw(void_arg(Id)) }.
+declare_arg((Id, Type)) -->
+    can_shadow(Id) -> do_state(add_var(Id,Type)) ; { throw(dupl_arg(Id)) }.
 
 correct_function(fun_def(Return, Fun, Args, Body),
                  fun_def(Return, Fun, Args, NBody)) -->
+    do_state push(),
     do_state put(returned, false),
-    declare_args(Args),
+    dcg_map(declare_arg, Args),
     do_state put(return_type, Return),
     do_state put(function_name, Fun),
     
@@ -43,7 +36,9 @@ correct_function(fun_def(Return, Fun, Args, Body),
             % void functions need explicit return
             append(NBody1, [return], NBody)
         ; throw( no_return(Fun) ) )
-    ; NBody = NBody1 }.
+    ; NBody = NBody1 },
+    
+    do_state pop().
 
 
 
