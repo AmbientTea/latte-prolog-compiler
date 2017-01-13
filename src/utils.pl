@@ -93,8 +93,7 @@ fill_gap((GapIn, GapOut), Fill, Flow, Flow) :-
 :- module_transparent separated//3.
 separated(_, _, []) --> [].
 separated(Sep, Clause, [H | T]) -->
-    { ClauseRun =.. [Clause, H] },
-    ClauseRun,
+    call(Clause, H),
     ({T = []} -> [] ; Sep, separated(Sep, Clause, T)).
 
 % dcg_map(+Closure, ?List)
@@ -102,35 +101,27 @@ separated(Sep, Clause, [H | T]) -->
 :- module_transparent dcg_map//2, dcg_map//3.
 dcg_map(_, []) --> [].
 dcg_map(Clause, [H|T]) -->
-    { Clause =.. [Op | Args], !, append(Args, [H], Args2), Run =.. [Op | Args2] }, Run, dcg_map(Clause, T).
-dcg_map(Clause, [H|T]) --> { Run =.. [Clause, H] }, Run, dcg_map(Clause, T).
+    call(Clause, H), dcg_map(Clause, T).
 
 % dcg_map(+Closure, ?List1, ?List2)
 % succeeds if Closure succeeds for each pair of coresponding elements in List1, List2
 dcg_map(_, [], []) --> [].
 dcg_map(Clause, [H|T], [HH|TT]) -->
-    { Clause =.. [Op | Args], !, append(Args, [H, HH], Args2), Run =.. [Op | Args2] }, Run, dcg_map(Clause, T, TT).
-dcg_map(Clause, [H|T], [HH|TT]) --> { Run =.. [Clause, H, HH] }, Run, dcg_map(Clause, T, TT).
+    call(Clause, H, HH), dcg_map(Clause, T, TT).
 
 % dcg_folfl(+Clause, +LeftValue, +List, ?RightValue)
 % DGC analogon of functional fold left
 :- module_transparent dcg_foldl//4, dcg_foldl//5.
 dcg_foldl(_, V, [], V) --> [].
 dcg_foldl(Clause, V1, [H|T], V2) -->
-    { Clause =.. DstrClause,
-      append(DstrClause, [V1, H, V3], NewClause),
-      Run =.. NewClause },
-    Run,
+    call(Clause, V1, H, V3),
     dcg_foldl(Clause, V3, T, V2).
 
 % dcg_folfl(+Clause, +LeftValue, +List, ?RightValue)
 % DGC analogon of functional fold left, iterating over two lists
 dcg_foldl(_, V, [], [], V) --> [].
 dcg_foldl(Clause, V1, [H1|T1], [H2|T2], V2) -->
-    { Clause =.. DstrClause,
-      append(DstrClause, [V1, H1, H2, V3], NewClause),
-      Run =.. NewClause },
-    Run,
+    call(Clause, V1, H1, H2, V3),
     dcg_foldl(Clause, V3, T1, T2, V2).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
