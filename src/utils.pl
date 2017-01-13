@@ -17,7 +17,7 @@
     local//2, local//1, op(600, fx, local),
     subtract_eq/3,
     select_dict/4,
-    keys//0,
+    keys//0, del//1,
     if_possible/1, op(600, fx, if_possible),
     leave_gap//1, fill_gap//2
 ]).
@@ -155,6 +155,10 @@ user:term_expansion(Head :== Exp, Head := V :- V is Exp).
 user:term_expansion((Head :== Exp :- Body0), (Head := V :- Body0, V is Exp)).
 
 ?(M, F) :- _ = M.F.
+
+:- module_transparent del//1.
+D.del(Key) := D2 :-
+    del_dict(Key, D, _Val, D2).
 
 :- module_transparent keys//0.
 D.keys() := Keys :-
