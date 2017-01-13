@@ -10,7 +10,7 @@
     zip/3,
     dcg_map//2, dcg_map//3,
     separated//3,
-    dcg_foldl//4, dcg_foldl//5, '?'/2,
+    dcg_foldl//3, dcg_foldl//4, dcg_foldl//5, '?'/2,
     get_state//1, put_state//1,
     do_state//1, op(600, fx, do_state),
     ask_state//2,
@@ -113,9 +113,16 @@ dcg_map(_, [], []) --> [].
 dcg_map(Clause, [H|T], [HH|TT]) -->
     call(Clause, H, HH), dcg_map(Clause, T, TT).
 
-% dcg_folfl(+Clause, +LeftValue, +List, ?RightValue)
+% dcg_folfl(+Clause, +LeftValue, ?RightValue)
 % DGC analogon of functional fold left
-:- module_transparent dcg_foldl//4, dcg_foldl//5.
+:- module_transparent dcg_foldl//3, dcg_foldl//4, dcg_foldl//5.
+dcg_foldl(_, V, V) --> [].
+dcg_foldl(Clause, V1, V2) -->
+    call(Clause, V1, V3),
+    dcg_foldl(Clause, V3, V2).
+
+% dcg_folfl(+Clause, +LeftValue, +List, ?RightValue)
+% DGC analogon of functional fold left, iterating over a list
 dcg_foldl(_, V, [], V) --> [].
 dcg_foldl(Clause, V1, [H|T], V2) -->
     call(Clause, V1, H, V3),
