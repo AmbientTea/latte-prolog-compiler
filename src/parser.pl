@@ -129,8 +129,9 @@ stmt(block(Stmts)) --> block(Stmts).
 stmt(expstmt(Exp)) --> exp(Exp), [;].
 
 % type
-types([void, int, boolean, string]).
-type(T) --> { types(Tps), member(T, Tps) }, [T].
+simple_types([void, int, boolean, string]).
+type(T) --> { simple_types(Tps), member(T, Tps) }, [T].
+type(class(T)) --> [ id(T) ].
 
 %
 % LEFT VALUES %

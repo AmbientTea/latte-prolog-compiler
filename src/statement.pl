@@ -80,6 +80,9 @@ correct(while(While, Do), while(NWhile,NDo)) -->
 
 %%% DECLARATIONS %%%
 
+correct(decl(class(_), _Decls), _NDecls) -->
+    { throw(not_implemented(classes)) }.
+
 correct(decl(void, Decls), _NDecls) -->
     { throw(void_decl(Decls)) }.
 
