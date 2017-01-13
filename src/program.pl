@@ -14,10 +14,14 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
-declare_top(class_def(_Name, _Fields, _Methods)) -->
-    { throw(not_implemented(classes)) }.
+declare_top(class_def(Name, Fields, Methods)) -->
+    get_state(Env),
+    { \+ (Env.classes ? get(Name)) or_else throw(dupl_class(Name)) },
+    do_state add_class(Name, Fields, Methods).
 
-%%%%%
+%
+% FUNCTION DEFINITIONS
+%
 
 declare_arg((Id, void)) -->  { throw(void_arg(Id)) }.
 declare_arg((Id, Type)) -->
@@ -40,14 +44,11 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
     
     do_state exit_function().
 
+%
+% CLASS DEFINITIONS
+%
 
-
-
-
-
-
-
-
-
+correct_topdef(class_def(_Name, _Fields, Methods), _) -->
+    { Methods == [] or_else throw(not_implemented("class methods")) }.
 
 
