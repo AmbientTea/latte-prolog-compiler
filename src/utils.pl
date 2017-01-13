@@ -91,10 +91,14 @@ fill_gap((GapIn, GapOut), Fill, Flow, Flow) :-
 % separated(+Separator, +Closure, +List)
 % calls Closure for each element in the List, calling Separator between them
 :- module_transparent separated//3.
-separated(_, _, []) --> [].
 separated(Sep, Clause, [H | T]) -->
-    call(Clause, H),
-    ({T = []} -> [] ; Sep, separated(Sep, Clause, T)).
+    call(Clause, H), separated_cont(Sep, Clause, T).
+separated(_, _, []) --> [].
+
+:- module_transparent separated_cont//3.
+separated_cont(Sep, Clause, [H | T]) -->
+    Sep, call(Clause, H), separated_cont(Sep, Clause, T).
+separated_cont(_Sep, _Clause, []) --> [].
 
 % dcg_map(+Closure, ?List)
 % succeeds if Closure succeeds for each element in List
