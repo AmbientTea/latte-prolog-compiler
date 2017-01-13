@@ -5,10 +5,10 @@
 
 correct_program(Program, NProgram) -->
     { emptyenv(Env) }, put_state(Env),
-    dcg_map(declare_fun, Program), !,
+    dcg_map(declare_top, Program), !,
     correct_functions( Program, NProgram).
 
-declare_fun(topdef(Return, Fun, Args, _)) -->
+declare_top(fun_def(Return, Fun, Args, _)) -->
     get_state(Env),
     { \+ member(Fun - _, Env.functions) or_else throw(dupl_fun(Fun)) },
     { maplist(snd, Args, ArgTypes) },
@@ -28,8 +28,8 @@ declare_args([(Id, Type) | T]) -->
 correct_functions([], []) --> !.
 correct_functions([H|T], [HH|TT]) --> pushed correct_function(H,HH), !, correct_functions(T, TT).
 
-correct_function(topdef(Return, Fun, Args, Body),
-                 topdef(Return, Fun, Args, NBody)) -->
+correct_function(fun_def(Return, Fun, Args, Body),
+                 fun_def(Return, Fun, Args, NBody)) -->
     do_state put(returned, false),
     declare_args(Args),
     do_state put(return_type, Return),

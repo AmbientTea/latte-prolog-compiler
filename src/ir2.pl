@@ -345,7 +345,7 @@ fun_args([(Id,Type) | T], SS, [(Reg,Type) | TT]) :-
     SS = S.put(Id,Type - Reg).
 
 
-function_definition(Env, topdef(Ret, Fun, Args, Body)) -->
+function_definition(Env, fun_def(Ret, Fun, Args, Body)) -->
     % { format(user_error, "compiling function: ~w : ~w -> ~w~n", [Fun, Args, Ret]) },
     {
         fun_args(Args, Mod, NArgs),

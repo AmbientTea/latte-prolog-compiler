@@ -62,6 +62,7 @@ tokenize(_Tok, Line) --> "*/", { throw(unopened_comment(Line)) }.
 tokenize(Tok, Line) -->
     "/*", !, (string(Skip), "*/" ; { throw(unclosed_comment(Line)) } ), !,
     {
+        % count new lines
         include('='(10), Skip, NLS),
         length(NLS, NP),
         NewLine is Line + NP
@@ -92,7 +93,10 @@ tokenize(_, Line) --> { throw(tokenize_fail(Line)) }.
 program([Def|Defs]) --> topdef(Def), !, program(Defs).
 program([]) --> [].
 
-topdef(topdef(Type, Id, Args, Block)) -->
+topdef(Def) --> fun_def(Def).
+
+% function definition
+fun_def(fun_def(Type, Id, Args, Block)) -->
     type(Type), [id(Id), '('], separated([,], farg, Args), [')'], block(Block).
 
 % function argument
