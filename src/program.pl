@@ -14,6 +14,9 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
+declare_top(class_def(_Name, _Fields, _Methods)) -->
+    { throw(not_implemented(classes)) }.
+
 %%%%%
 
 declare_arg((Id, void)) -->  { throw(void_arg(Id)) }.

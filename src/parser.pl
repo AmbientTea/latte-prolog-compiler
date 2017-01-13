@@ -25,7 +25,7 @@ parse(_File, _Tree) :- throw(parsing_fail).
 %%% LEXER %%%
 %%%%%%%%%%%%%	
 
-keywords([ if, else, while, return, true, false, int, string, boolean, void]).
+keywords([ if, else, while, return, true, false, int, string, boolean, void, class]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
             "=", "<=", "<", ">=", ">", "||", "&&", "!", ","]).
 
@@ -93,7 +93,7 @@ tokenize(_, Line) --> { throw(tokenize_fail(Line)) }.
 program([Def|Defs]) --> topdef(Def), !, program(Defs).
 program([]) --> [].
 
-topdef(Def) --> fun_def(Def).
+topdef(Def) --> fun_def(Def) ; class_def(Def).
 
 % function definition
 fun_def(fun_def(Type, Id, Args, Block)) -->
@@ -101,6 +101,14 @@ fun_def(fun_def(Type, Id, Args, Block)) -->
 
 % function argument
 farg((Id, Type)) --> type(Type), !, [id(Id)].
+
+class_def(class_def(Name, Fields, Methods)) -->
+    [ class, id(Name), '{'],
+        dcg_foldl(class_subdef, ([],[]), (Fields, Methods)),
+    ['}'].
+
+class_subdef((Fields, Methods), ([(Type - Id)|Fields], Methods)) -->
+    type(Type), [ id(Id), ;].
 
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
