@@ -92,34 +92,24 @@ tokenize(_, Line) --> { throw(tokenize_fail(Line)) }.
 program([Def|Defs]) --> topdef(Def), !, program(Defs).
 program([]) --> [].
 
-topdef(topdef(Type, Id, Args, Block)) --> type(Type), [id(Id), '('], args(Args), [')'], block(Block).
+topdef(topdef(Type, Id, Args, Block)) -->
+    type(Type), [id(Id), '('], separated([,], farg, Args), [')'], block(Block).
 
-
+% function argument
 farg((Id, Type)) --> type(Type), !, [id(Id)].
-args([H|T]) --> farg(H), [,], !, args(T).
-args([H]) --> farg(H).
-args([]) --> [], !.
-
-%%% LISTS
-stmts([H|T]) --> stmt(H), !, stmts(T).
-stmts([]) --> [], !.
-
-inits([H|T]) --> init(H), [,], !, inits(T).
-inits([H]) --> init(H).
-inits([]) --> [].
 
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
 
-block( Stmts ) --> ['{'], !, stmts(Stmts), ['}'], !.
+block( Stmts ) --> ['{'], !, separated([], stmt, Stmts), ['}'], !.
 
 init(init(Id, Exp)) --> [id(Id), =], !, exp(Exp).
 init(noinit(Id)) --> [id(Id)].
 
 stmt( skip ) --> [;], !.
 
-stmt( decl(Type, Ins) ) --> type(Type), inits(Ins), [;].
+stmt( decl(Type, Ins) ) --> type(Type), separated([,], init, Ins), [;].
 
 stmt( =(Left, Exp) ) --> leftval(Left), [=], exp(Exp), [;].
 
@@ -152,10 +142,6 @@ leftval(var(Id)) --> [ id(Id) ].
 %%% expressions %%%
 %%%%%%%%%%%%%%%%%%%
 
-exps([H|T]) --> exp(H), [,], exps(T).
-exps([E]) --> exp(E).
-exps([]) --> [].
-
 exp(E) --> orexp(E).
 
 
@@ -164,7 +150,7 @@ sexp(E) --> ['('], !, exp(E), [')'], !.
 sexp(int(I)) --> [I], { integer(I) }, !.
 sexp(neg(Exp)) --> [-], sexp(Exp), !.
 sexp(str(S)) --> [str(S)], !.
-sexp(app(Fun, Args)) --> [id(Fun), '('], !, exps(Args), [')'].
+sexp(app(Fun, Args)) --> [id(Fun), '('], !, separated([,], exp, Args), [')'].
 sexp(var(V)) --> [id(V)], !.
 sexp(true) --> [true], !.
 sexp(false) --> [false], !.
