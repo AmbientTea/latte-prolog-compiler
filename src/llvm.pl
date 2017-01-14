@@ -135,6 +135,7 @@ stmt(store(Type, Ptr, Val)) -->
 stmt(S) --> "*unrecognized*: ", atom(S).
 
 % assignment values
+rightval(null) --> "null".
 rightval(phi(Type, Args)) -->
     "phi ", type(Type), " ", separated(", ", phi_arg, Args).
 

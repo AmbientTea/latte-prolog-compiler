@@ -138,6 +138,8 @@ exps(Env, [Exp | L], [Reg | LL], Dep) -->
     expression_merge(Dep1, Dep2, Dep).
     
 % exp(+Environment, +Expression, -Result Value, -Dependencies)
+exp(_Env, null, null, Dep) -->
+    empty_deps(Dep).
 exp(_Env, int(I), I, Dep) -->
     empty_deps(Dep).
 exp(_Env, false, 0, Dep) -->
