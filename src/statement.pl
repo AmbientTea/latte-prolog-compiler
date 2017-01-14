@@ -80,9 +80,6 @@ correct(while(While, Do), while(NWhile,NDo)) -->
 
 %%% DECLARATIONS %%%
 
-correct(decl(class(_), _Decls), _NDecls) -->
-    { throw(not_implemented(classes)) }.
-
 correct(decl(void, Decls), _NDecls) -->
     { throw(void_decl(Decls)) }.
 
@@ -97,7 +94,8 @@ decl_correct(Type, noinit(Id), init(Id, V)) -->
     can_shadow(Id) ->
         { Type = int -> V = int(0)
         ; Type = boolean -> V = false
-        ; Type = string -> V = str("") },
+        ; Type = string -> V = str("")
+        ; Type = class(_) -> V = int(0) },
         do_state(add_var(Id, Type))
     ; { throw(dupl_decl(Id)) }.
 
