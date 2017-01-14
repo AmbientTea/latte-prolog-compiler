@@ -107,7 +107,7 @@ class_def(class_def(Name, Fields, Methods)) -->
         dcg_foldl(class_subdef, ([],[]), (Fields, Methods)),
     ['}'].
 
-class_subdef((Fields, Methods), ([(Type - Id)|Fields], Methods)) -->
+class_subdef((Fields, Methods), ([(Id - Type)|Fields], Methods)) -->
     type(Type), [ id(Id), ;].
 
 %%%%%%%%%%%%%%%%%%
