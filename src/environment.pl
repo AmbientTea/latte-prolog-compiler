@@ -13,7 +13,8 @@ emptyenv( environment{
         printString - fun{ return: void, args: [string], extern: true },
         concat      - fun{ return: string, args: [string, string], extern: true },
         readInt     - fun{ return: int, args: [], extern: true },
-        readString  - fun{ return: string, args: [], extern: true }
+        readString  - fun{ return: string, args: [], extern: true },
+        malloc      - fun{ return: string, args: [int], extern: true }
     ],
     strings : []
 }).
@@ -27,6 +28,10 @@ M.add_string(Str) := M.put(strings, SS) :-
 
 M.add_class(Class, Fields, _Methods) := M.put(classes/Class, ClassInfo) :-
     ClassInfo = class{ fields: Fields }.
+
+M.class_size(Class) := Size :-
+    length(M.classes.Class.fields, Len),
+    Size is Len * 4.
 
 % FUNCTION CONTEXT
 M.enter_function(Fun, Ret) :=
