@@ -25,7 +25,7 @@ parse(_File, _Tree) :- throw(parsing_fail).
 %%% LEXER %%%
 %%%%%%%%%%%%%	
 
-keywords([ if, else, while, return, true, false, int, string, boolean, void, class]).
+keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
             "=", "<=", "<", ">=", ">", "||", "&&", "!", ","]).
 
@@ -167,6 +167,7 @@ sexp(app(Fun, Args)) --> [id(Fun), '('], !, separated([,], exp, Args), [')'].
 sexp(var(V)) --> [id(V)], !.
 sexp(true) --> [true], !.
 sexp(false) --> [false], !.
+sexp(new(Type)) --> [ new, id(Type) ].
 
 % logical
 :- op(600, xfy, '&&').
