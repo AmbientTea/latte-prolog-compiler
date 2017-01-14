@@ -24,8 +24,7 @@ inst_topdef(function(_, _, Args, Body), C, C) :-
     foldl(inst_arg, Args, 1, _),
     foldl(inst_instr, Body, (0,1), _).
 
-inst_topdef(decl(_, _, _), C, C).
-inst_topdef(string(_, _, _,_), C, C).
+inst_topdef(_Def, C, C).
 
 inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
@@ -47,6 +46,7 @@ type(int) --> "i32".
 type(string) --> "i8*".
 type(boolean) --> "i1".
 type(void) --> "void".
+type(class(Type)) --> "%", atom(Type), "*".
 
 types(Types) --> separated(", ", type, Types).
 
@@ -86,6 +86,7 @@ operator('<=', "icmp sle", "i32", "i1").
 operator('>=', "icmp sge", "i32", "i1").
 
 % functions
+% topdef(Def) --> { format(user_error, "topdef: ~w~n", [Def]), fail }.
 topdef(function(Type, Fun, Args, Body)) -->
     "define ", type(Type), " @", atom(Fun), "(", args(Args), "){",
     stmts(Body),
@@ -93,9 +94,12 @@ topdef(function(Type, Fun, Args, Body)) -->
 topdef(decl(Fun, Type, Args)) -->
     "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
 
-topdef(string(Str, Lab, Len, 0)) --> !,
+topdef(string(Str, Lab, Len, 0)) -->
     atom(Lab), " = private constant [", atom(Len), " x i8] c\"",
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
+
+topdef(class(Name, Fields)) -->
+    "%", atom(Name), " = {", separated(", ", type, Fields), "}\n". 
 
 % suffix substring
 topdef(string(_Str, _Lab, _Len, _Ind)) --> [].

@@ -326,6 +326,15 @@ stmt(Env, while(While, Do), Dep) -->
     { Dep = Dep1.put(block_in, BlockIn).put(block_out, EndBlock) }
 . % while
 
+%%%%%%%%%%%%%%%
+%%% CLASSES %%%
+%%%%%%%%%%%%%%%
+class_definition(_Env, class_def(_Name, _Fields, _Methods)) --> [].
+
+class_declaration(Name - Info) -->
+    { maplist(snd(-), Info.fields, FieldTypes) },
+    [ class(Name, FieldTypes) ].
+
 %%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%
@@ -364,7 +373,7 @@ function_declaration(Fun - FunInfo) -->
 %%%%%%%%%%%%%%%
 
 toplevel_definition(Env, Def) -->
-    function_definition(Env, Def).
+    ( function_definition(Env, Def) ; class_definition(Env, Def) ).
 
 
 string_declaration(Str1 - Lab - Len - Ind) -->
@@ -373,6 +382,8 @@ string_declaration(Str1 - Lab - Len - Ind) -->
     [ string(Str, Lab, Len, Ind) ].
 
 program(Env, Program) -->
+    { dict_pairs(Env.classes, _Tag, ClassPairs) },
+    dcg_map(class_declaration, ClassPairs),
     dcg_map(function_declaration, Env.functions),
     dcg_map(string_declaration, Env.strings),
     dcg_map(toplevel_definition(Env), Program).
