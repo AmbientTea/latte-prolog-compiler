@@ -43,6 +43,8 @@ exception_message(no_function(Fun)) -->
 exception_message(bad_type(Expr, ExpectedType, Type)) -->
     "expression ", atom(Expr), " has type ", atom(Type), " but type ",
     atom(ExpectedType), " was expected".
+exception_message(bad_class(Type)) -->
+    "class ", atom(Type), " does not exist".
 
 % statements
 exception_message(dupl_decl(Id)) -->

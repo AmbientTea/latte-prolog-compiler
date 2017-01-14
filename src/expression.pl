@@ -18,6 +18,13 @@ types(false, boolean, false) --> !.
 types( LeftVal, Type, NLeftVal ) -->
     leftval(LeftVal, Type, NLeftVal).
 
+%%% AGGREGATE TYPES %%%
+
+types( new(Type), class(Type), new(Type) ) -->
+    get_state(Env),
+%    { format(user_error, "~w~n", [new : Type]) },
+    { Env.classes ? get(Type) or_else throw(bad_class(Type)) }.
+
 %%% OPERATORS %%%
 
 types(neg(Exp), int, int(0) - NExp) -->
