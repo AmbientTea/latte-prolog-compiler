@@ -72,3 +72,7 @@ exception_message(no_return(Fun)) -->
     "control flow reaches function ", atom(Fun), " end without return".
 exception_message(dupl_arg(Arg)) -->
     "argument ", atom(Arg), " declared more than once".
+
+% class
+exception_message(dupl_field(Field)) -->
+    "duplicate field ", atom(Field).

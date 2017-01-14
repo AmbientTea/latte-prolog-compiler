@@ -48,7 +48,10 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
 % CLASS DEFINITIONS
 %
 
-correct_topdef(class_def(_Name, _Fields, Methods), _) -->
+correct_topdef(class_def(_Name, Fields, Methods), _) -->
+    { format(user_error, "~w~n", [Fields]) },
+    { maplist(fst(-), Fields, FieldNames) },
+    { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) },
     { Methods == [] or_else throw(not_implemented("class methods")) }.
 
 
