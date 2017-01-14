@@ -4,9 +4,12 @@
     op(500, yfx, ~),
     op(700, xfx, set_is), set_is/2,
     op(1100, xfy, or_else), or_else/2,
+    op(1100, xfy, then), then/2,
     fst/2, snd/2,
     fst/3, snd/3,
     foldr/4,
+    duplicate_in/2,
+    no_duplicates/1,
     zip/3,
     dcg_map//2, dcg_map//3,
     separated//3,
@@ -38,7 +41,9 @@ snd(Op, X, B) :- X =.. [Op, _A, B].
 if_possible Clause :- Clause, !.
 if_possible _Clause.
 
+:- module_transparent or_else/2, then/2.
 A or_else B :- A -> true ; B.
+A then B :- A -> B ; true.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % DGC State Handling %
@@ -64,6 +69,14 @@ foldr(_, Zero, [], Zero ).
 foldr(Fun, Zero, [H | Args], Ret) :-
     call(Fun, Zero, H, NZero),
     foldr(Fun, NZero, Args, Ret).
+
+duplicate_in(Member, [Member | Tail]) :- member(Member, Tail).
+duplicate_in(Member, [_ | Tail]) :- duplicate_in(Member, Tail).
+
+no_duplicates([]).
+no_duplicates([H|T]) :-
+    \+ member(H, T),
+    no_duplicates(T).
 
 zip([], _, []).
 zip(_, [], []).
