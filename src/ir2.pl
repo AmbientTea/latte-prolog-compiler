@@ -326,6 +326,9 @@ stmt(Env, while(While, Do), Dep) -->
     { Dep = Dep1.put(block_in, BlockIn).put(block_out, EndBlock) }
 . % while
 
+%%%%%%%%%%%%%%%%%
+%%% FUNCTIONS %%%
+%%%%%%%%%%%%%%%%%
 
 function_body(Env, Body, Dep) -->
     [ block(StartBlock) ],
@@ -333,10 +336,6 @@ function_body(Env, Body, Dep) -->
     { Dep.block_in = StartBlock },
     % last block can be empty due to returns in bramches.
     [ unreachable ].
-
-%%%%%%%%%%%%%%%
-%%% PROGRAM %%%
-%%%%%%%%%%%%%%%
 
 % creates register variables for each argument and creates MOD set from them
 fun_args([], e{}, []).
@@ -360,17 +359,23 @@ function_declaration(_Fun - FunInfo) -->
 function_declaration(Fun - FunInfo) -->
     [ decl(Fun, FunInfo.return, FunInfo.args) ].
 
+%%%%%%%%%%%%%%%
+%%% PROGRAM %%%
+%%%%%%%%%%%%%%%
+
+toplevel_definition(Env, Def) -->
+    function_definition(Env, Def).
+
+
 string_declaration(Str1 - Lab - Len - Ind) -->
     { string_concat(Str1, "\0", Str) },
     % we include blank index variable for possible suffix optimization
     [ string(Str, Lab, Len, Ind) ].
 
-
-
 program(Env, Program) -->
     dcg_map(function_declaration, Env.functions),
     dcg_map(string_declaration, Env.strings),
-    dcg_map(function_definition(Env), Program).
+    dcg_map(toplevel_definition(Env), Program).
 
 
 program(Env, Program, IR) :-
