@@ -143,7 +143,7 @@ stmt(expstmt(Exp)) --> exp(Exp), [;].
 % type
 simple_types([void, int, boolean, string]).
 type(T) --> { simple_types(Tps), member(T, Tps) }, [T].
-type(class(T)) --> [ id(T) ].
+type(ref(class(T))) --> [ id(T) ].
 
 %
 % LEFT VALUES %

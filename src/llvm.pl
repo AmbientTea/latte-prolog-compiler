@@ -46,7 +46,8 @@ type(int) --> "i32".
 type(string) --> "i8*".
 type(boolean) --> "i1".
 type(void) --> "void".
-type(class(Type)) --> "%", atom(Type), "*".
+type(class(Type)) --> "%", atom(Type).
+type(ref(Type)) --> type(Type), "*".
 
 types(Types) --> separated(", ", type, Types).
 
@@ -150,7 +151,7 @@ rightval(cast(V, From, To)) -->
 rightval(strcast(Len, Lab, Ind)) -->
     "getelementptr i8, i8* bitcast ([", atom(Len), " x i8]* ", atom(Lab), " to i8*), i32 ", atom(Ind).
 
-rightval(getmemberptr(class(Class), Ptr, Pos)) -->
+rightval(getmemberptr(ref(class(Class)), Ptr, Pos)) -->
     "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
 
 rightval(load(Type, Reg)) -->

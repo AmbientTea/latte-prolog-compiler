@@ -95,7 +95,7 @@ decl_correct(Type, noinit(Id), init(Id, V)) -->
         { Type = int -> V = int(0)
         ; Type = boolean -> V = false
         ; Type = string -> V = str("")
-        ; Type = class(_) -> V = int(0) },
+        ; Type = ref(class(_)) -> V = int(0) },
         do_state(add_var(Id, Type))
     ; { throw(dupl_decl(Id)) }.
 

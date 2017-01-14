@@ -20,7 +20,7 @@ types( LeftVal, Type, NLeftVal ) -->
 
 %%% AGGREGATE TYPES %%%
 
-types( new(Type), class(Type), new(Type) ) -->
+types( new(Type), ref(class(Type)), new(Type) ) -->
     get_state(Env),
 %    { format(user_error, "~w~n", [new : Type]) },
     { Env.classes ? get(Type) or_else throw(bad_class(Type)) }.

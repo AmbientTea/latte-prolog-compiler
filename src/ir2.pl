@@ -251,13 +251,13 @@ leftval(_Env, var(Type, Id), reg(Reg), Dep) -->
 leftval(Env, field(Class, Exp, Field), ptr(Type, Ptr), Dep) -->
     exp(Env, Exp, Obj, Dep),
     { nth0(Pos, Env.classes.Class.fields, Field - Type) },
-    [ Ptr = getmemberptr(class(Class), Obj, Pos) ].
+    [ Ptr = getmemberptr(ref(class(Class)), Obj, Pos) ].
 
 % allocate Len objects of type Class
 malloc(Env, class(Class), Len, Reg) -->
     { Size is Len * Env.class_size(Class) },
     [ Reg1 = call(string, malloc, [(Size, int)]) ],
-    [ Reg = cast(Reg1, string, class(Class)) ].
+    [ Reg = cast(Reg1, string, ref(class(Class))) ].
 
 
 store(reg(Reg), Val) --> { Reg = Val }.
@@ -265,7 +265,7 @@ store(ptr(Type, Ptr), Val) --> [ store(Type, Ptr, Val) ].
 
 load(Env, field(Class, Ptr, Field), Reg) -->
     { nth0(Pos, Env.classes.Class.fields, Field - Type) },
-    [ Reg1 = getmemberptr(class(Class), Ptr, Pos) ],
+    [ Reg1 = getmemberptr(ref(class(Class)), Ptr, Pos) ],
     [ Reg = load(Type, Reg1) ].
     
 

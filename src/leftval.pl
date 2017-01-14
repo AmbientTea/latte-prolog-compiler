@@ -11,12 +11,11 @@ leftval(var(Id), Type, var(Type, Id)) -->
 
 leftval( field(Exp, Field), FieldType, field(Class, NExp, Field) ) -->
     get_state(Env), types(Exp, ExpType, NExp),
-    { ExpType = class(Class) or_else
+    { ExpType = ref(class(Class)) or_else
         throw(non_class_field(Exp, ExpType, Field)) },
     
     { ClassInfo = Env.classes.get(Class) or_else
         throw(bad_class(Class)) },
-    
     { member(Field - FieldType, ClassInfo.fields) or_else
         throw(bad_field(Class, Field)) }.
 
