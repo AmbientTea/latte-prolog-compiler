@@ -11,24 +11,29 @@
 %%%%%%%%%%%%%%%%%%%%%%%%
 
 optimize(Prog, OptProg) :-
-    phrase(divide(Strings, Functions, Decls), Prog),
+    phrase(divide(Strings, Classes, Functions, Decls), Prog),
 
     optimize_strings(Strings, OptStrings),
     maplist(optimize_function, Functions, OptFunctions),
     
-    append([ Decls, OptStrings, OptFunctions], OptProg).
+    append([ Decls, Classes, OptStrings, OptFunctions], OptProg).
 
-% divide(?Strings, ?Functions, ?FunDecls) <--> Strings ++ Functions ++ FunDecls
-divide([], [], []) --> [].
-divide([Str | Strs], Funs, Decls) -->
+% divide(?Strings, ?Classes, ?Functions, ?FunDecls)
+% <-->
+% Strings ++ Classes ++ Functions ++ FunDecls
+divide([], [], [], []) --> [].
+divide([Str | Strs], Clss, Funs, Decls) -->
     [Str], { Str =.. [string | _] },
-    divide(Strs, Funs, Decls).
-divide(Strs, [Fun | Funs], Decls) -->
+    divide(Strs, Clss, Funs, Decls).
+divide(Strs, [Class | Clss], Funs, Decls) -->
+    [Class], { Class =.. [class | _] },
+    divide(Strs, Clss, Funs, Decls).
+divide(Strs, Clss, [Fun | Funs], Decls) -->
     [Fun], { Fun =.. [function | _] },
-    divide(Strs, Funs, Decls).
-divide(Strs, Funs, [Decl | Decls]) -->
+    divide(Strs, Clss, Funs, Decls).
+divide(Strs, Clss, Funs, [Decl | Decls]) -->
     [Decl], { Decl =.. [decl | _] },
-    divide(Strs, Funs, Decls).
+    divide(Strs, Clss, Funs, Decls).
 
 
 optimize_strings(Strs, OptStrs) :-
