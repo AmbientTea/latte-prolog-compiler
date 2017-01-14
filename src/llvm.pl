@@ -99,7 +99,7 @@ topdef(string(Str, Lab, Len, 0)) -->
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
 
 topdef(class(Name, Fields)) -->
-    "%", atom(Name), " = {", separated(", ", type, Fields), "}\n". 
+    "%", atom(Name), " = type {", separated(", ", type, Fields), "}\n". 
 
 % suffix substring
 topdef(string(_Str, _Lab, _Len, _Ind)) --> [].

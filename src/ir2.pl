@@ -151,6 +151,10 @@ exp(Env, str(Str), V, Dep) -->
 exp(_Env, var(VarType, Id), Reg, Dep) -->
     ask_dep(Id, VarType - Reg, Dep).
 
+exp(Env, new(Type), Reg, Dep) -->
+    empty_deps(Dep),
+    malloc(Env, class(Type), 1, Reg).
+    
 
 exp(Env, app(Fun, ArgExps), V, Dep) -->
     exps(Env, ArgExps, ArgVals, Dep),
@@ -238,6 +242,11 @@ cond(Env, Exp, LabTrue, LabFalse, Dep) -->
 leftval(_Env, var(Type, Id), reg(Reg), Dep) -->
     empty_deps(Empty),
     { Dep = Empty.put(mod/Id, Type - Reg) }.
+
+% allocate Len objects of type Class
+malloc(Env, class(Class), Len, Reg) -->
+    { Size is Len * Env.class_size(Class) },
+    [ Reg = call(string, malloc, [(Size, int)]) ].
 
 
 store(reg(Reg), Val) --> { Reg = Val }.
