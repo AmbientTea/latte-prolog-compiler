@@ -14,12 +14,21 @@ types(str(S), string, str(S)) --> do_state add_string(S).
 types(true, boolean, true) --> !.
 types(false, boolean, false) --> !.
 types(null, ref(_), null) --> [].
+
+types(cast(Type, null), Type, null) -->
+    { Type = ref(_) or_else throw(bad_cast(null, ref(...), Type)) }.
+
+types(cast(Type, Exp), Type, NCast) -->
+    types(Exp, ExpType, NExp),
+    { ExpType == Type -> NCast = NExp
+    % NCast = cast(Type, ExpType, NExp)
+    ; throw(bad_cast(Exp, ExpType, Type)) }.
+
 %%% VARIABLES %%%
 types( LeftVal, Type, NLeftVal ) -->
     leftval(LeftVal, Type, NLeftVal).
 
 %%% AGGREGATE TYPES %%%
-
 types( new(Type), ref(class(Type)), new(Type) ) -->
     get_state(Env),
 %    { format(user_error, "~w~n", [new : Type]) },
@@ -27,7 +36,6 @@ types( new(Type), ref(class(Type)), new(Type) ) -->
 
 
 %%% OPERATORS %%%
-
 types(neg(Exp), int, int(0) - NExp) -->
     expect_type(Exp, int, NExp).
 

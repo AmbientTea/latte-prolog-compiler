@@ -50,6 +50,8 @@ exception_message(non_class_field(Exp, Type, Field)) -->
     "non-class type ", atom(Type).
 exception_message(bad_field(Class, Field)) -->
     "access to non-existent field ", atom(Field), " in class ", atom(Class).
+exception_message(bad_cast(Exp, From, To)) -->
+    "illegal cast of expression: ", atom(Exp), " of type ", atom(From), " to ", atom(To).
 % statements
 exception_message(dupl_decl(Id)) -->
     "variable ", atom(Id), " already declared in its scope".

@@ -44,5 +44,4 @@ test_bad "tests/mrjp-tests/bad/runtime" ""
 echo ========== COMPILER TESTS: =============
 test_good "tests/good/" "BASIC"
 test_good "tests/mrjp-tests/good/basic" "COMMUNITY BASIC"
-
-
+test_good "tests/extensions/struct" "STRUCT"

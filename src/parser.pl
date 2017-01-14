@@ -160,7 +160,8 @@ exp(E) --> orexp(E) ; leftval(E).
 
 
 % simple
-sexp(E) --> ['('], !, exp(E), [')'], !.
+sexp(cast(Type, Exp)) --> ['('], type(Type), [')'], !, exp(Exp).
+sexp(E) --> ['('], exp(E), [')'], !.
 sexp(int(I)) --> [I], { integer(I) }, !.
 sexp(neg(Exp)) --> [-], sexp(Exp), !.
 sexp(str(S)) --> [str(S)], !.

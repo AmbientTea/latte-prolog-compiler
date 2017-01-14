@@ -147,6 +147,12 @@ exp(_Env, false, 0, Dep) -->
 exp(_Env, true, 1, Dep) -->
     empty_deps(Dep).
 
+exp(Env, cast(From, To, Exp), Reg, Dep) -->
+    { format(user_error, "~w~n", [From - To - Exp]) },
+    exp(Env, Exp, ExpReg, Dep),
+    [ Reg = cast(ExpReg, From, To) ].
+    
+
 exp(Env, str(Str), V, Dep) -->
     { member(Str - StrLab - Len - Index, Env.strings) },
     [ V = strcast(Len, StrLab, Index) ],
