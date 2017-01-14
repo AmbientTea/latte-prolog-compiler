@@ -6,6 +6,8 @@
 
 :- module(ir2, [program/3]).
 
+:- use_module(library(lists)).
+
 :- use_module(utils).
 
 :- op(600, xfy, ++).
@@ -154,7 +156,10 @@ exp(_Env, var(VarType, Id), Reg, Dep) -->
 exp(Env, new(Type), Reg, Dep) -->
     empty_deps(Dep),
     malloc(Env, class(Type), 1, Reg).
-    
+
+exp(Env, field(Class, Exp, Field), Reg, Dep) -->
+    exp(Env, Exp, ExpV, Dep),
+    load(Env, field(Class, ExpV, Field), Reg).
 
 exp(Env, app(Fun, ArgExps), V, Dep) -->
     exps(Env, ArgExps, ArgVals, Dep),
@@ -246,10 +251,17 @@ leftval(_Env, var(Type, Id), reg(Reg), Dep) -->
 % allocate Len objects of type Class
 malloc(Env, class(Class), Len, Reg) -->
     { Size is Len * Env.class_size(Class) },
-    [ Reg = call(string, malloc, [(Size, int)]) ].
+    [ Reg1 = call(string, malloc, [(Size, int)]) ],
+    [ Reg = cast(Reg1, string, class(Class)) ].
 
 
 store(reg(Reg), Val) --> { Reg = Val }.
+
+load(Env, field(Class, Ptr, Field), Reg) -->
+    { nth0(Pos, Env.classes.Class.fields, Field - Type) },
+    [ Reg1 = getmemberptr(class(Class), Ptr, Pos) ],
+    [ Reg = load(Type, Reg1) ].
+    
 
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%

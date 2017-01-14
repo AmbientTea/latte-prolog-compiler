@@ -140,10 +140,18 @@ rightval(call(Type, Fun, Args)) -->
 rightval(strcast(Len, Lab, 0)) -->
     "bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
 
+rightval(cast(V, From, To)) -->
+    "bitcast ", type(From), " ", atom(V), " to ", type(To).
 % complex constant expression to access a suffix of a string
 %0 = getelementptr i8, i8* bitcast ([8 x i8]* @str0 to i8*), i32 1
 rightval(strcast(Len, Lab, Ind)) -->
     "getelementptr i8, i8* bitcast ([", atom(Len), " x i8]* ", atom(Lab), " to i8*), i32 ", atom(Ind).
+
+rightval(getmemberptr(class(Class), Ptr, Pos)) -->
+    "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 ", atom(Pos), ", i32 0".
+
+rightval(load(Type, Reg)) -->
+    "load ", type(Type), ", ", type(Type), "* ", atom(Reg).
 
 rightval(OpE) -->
     { OpE =.. [Op, V1, V2], operator(Op, LLOp, InT, _) },
