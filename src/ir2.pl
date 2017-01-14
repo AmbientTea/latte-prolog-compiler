@@ -248,6 +248,11 @@ leftval(_Env, var(Type, Id), reg(Reg), Dep) -->
     empty_deps(Empty),
     { Dep = Empty.put(mod/Id, Type - Reg) }.
 
+leftval(Env, field(Class, Exp, Field), ptr(Type, Ptr), Dep) -->
+    exp(Env, Exp, Obj, Dep),
+    { nth0(Pos, Env.classes.Class.fields, Field - Type) },
+    [ Ptr = getmemberptr(class(Class), Obj, Pos) ].
+
 % allocate Len objects of type Class
 malloc(Env, class(Class), Len, Reg) -->
     { Size is Len * Env.class_size(Class) },
@@ -256,6 +261,7 @@ malloc(Env, class(Class), Len, Reg) -->
 
 
 store(reg(Reg), Val) --> { Reg = Val }.
+store(ptr(Type, Ptr), Val) --> [ store(Type, Ptr, Val) ].
 
 load(Env, field(Class, Ptr, Field), Reg) -->
     { nth0(Pos, Env.classes.Class.fields, Field - Type) },

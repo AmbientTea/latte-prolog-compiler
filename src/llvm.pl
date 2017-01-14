@@ -128,6 +128,9 @@ stmt(ret(Type, V)) --> "ret ", type(Type), " ", atom(V).
 
 stmt(unreachable) --> "unreachable".
 
+stmt(store(Type, Ptr, Val)) -->
+    "store ", type(Type), " ", atom(Val), ", ", type(Type), "* ", atom(Ptr).
+
 stmt(S) --> "*unrecognized*: ", atom(S).
 
 % assignment values
@@ -148,7 +151,7 @@ rightval(strcast(Len, Lab, Ind)) -->
     "getelementptr i8, i8* bitcast ([", atom(Len), " x i8]* ", atom(Lab), " to i8*), i32 ", atom(Ind).
 
 rightval(getmemberptr(class(Class), Ptr, Pos)) -->
-    "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 ", atom(Pos), ", i32 0".
+    "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
 
 rightval(load(Type, Reg)) -->
     "load ", type(Type), ", ", type(Type), "* ", atom(Reg).
