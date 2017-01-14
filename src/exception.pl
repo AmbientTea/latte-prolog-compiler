@@ -45,7 +45,11 @@ exception_message(bad_type(Expr, ExpectedType, Type)) -->
     atom(ExpectedType), " was expected".
 exception_message(bad_class(Type)) -->
     "class ", atom(Type), " does not exist".
-
+exception_message(non_class_field(Exp, Type, Field)) -->
+    "tried to access field ", atom(Field), " in expression ", atom(Exp), " of ",
+    "non-class type ", atom(Type).
+exception_message(bad_field(Class, Field)) -->
+    "access to non-existent field ", atom(Field), " in class ", atom(Class).
 % statements
 exception_message(dupl_decl(Id)) -->
     "variable ", atom(Id), " already declared in its scope".

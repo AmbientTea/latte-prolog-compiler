@@ -27,7 +27,7 @@ parse(_File, _Tree) :- throw(parsing_fail).
 
 keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
-            "=", "<=", "<", ">=", ">", "||", "&&", "!", ","]).
+            "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", "."]).
 
 id(Id) --> [Start], { code_type(Start, alpha) }, id_cont(Cont), { atom_codes(Id, [Start | Cont]) }.
 id_cont([H|T]) --> [H], { code_type(H, csym) }, id_cont(T).
@@ -150,12 +150,13 @@ type(class(T)) --> [ id(T) ].
 %
 
 leftval(var(Id)) --> [ id(Id) ].
+leftval(field(Exp, Field)) --> !, sexp(Exp), ['.'], !, [id(Field)], !.
 
 %%%%%%%%%%%%%%%%%%%
 %%% expressions %%%
 %%%%%%%%%%%%%%%%%%%
 
-exp(E) --> orexp(E).
+exp(E) --> orexp(E) ; leftval(E).
 
 
 % simple
