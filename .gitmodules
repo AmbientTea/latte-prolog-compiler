@@ -1,3 +1,4 @@
 [submodule "tests/mrjp-tests"]
 	path = tests/mrjp-tests
 	url = https://github.com/tomwys/mrjp-tests.git
+	ignore = dirty
