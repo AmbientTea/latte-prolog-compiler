@@ -25,16 +25,6 @@ types( new(Type), class(Type), new(Type) ) -->
 %    { format(user_error, "~w~n", [new : Type]) },
     { Env.classes ? get(Type) or_else throw(bad_class(Type)) }.
 
-types( field(Exp, Field), FieldType, field(Class, NExp, Field) ) -->
-    get_state(Env), types(Exp, ExpType, NExp),
-    { ExpType = class(Class) or_else
-        throw(non_class_field(Exp, ExpType, Field)) },
-    
-    { ClassInfo = Env.classes.get(Class) or_else
-        throw(bad_class(Class)) },
-    
-    { member(Field - FieldType, ClassInfo.fields) or_else
-        throw(bad_field(Class, Field)) }.
 
 %%% OPERATORS %%%
 
