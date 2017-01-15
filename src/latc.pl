@@ -12,10 +12,10 @@
 :- use_module(compile).
 
 :- initialization (
-    catch( if_possible main
-         , Exception
-         , handle_exception(Exception) ),
-    halt(0)
+	catch( if_possible main
+		 , Exception
+		 , handle_exception(Exception) ),
+	halt(0) ; halt(1)
 ).
 
 command_line_arguments(Opts, Args) :-
@@ -34,22 +34,25 @@ command_line_arguments(Opts, Args) :-
 		  , longflags(['optimize'])
 		  , help(['optimize: true, false'])
 		  ]
-    	],
+		],
 	current_prolog_flag(argv, LineArgs),
 	opt_parse(OptSpec, LineArgs, Opts, Args).
 
 main :-
-    command_line_arguments(Opts, Args),
+	command_line_arguments(Opts, Args),
 	
 	( Args = [File | _] or_else throw(no_file) ),
 	( file_exists(File) or_else throw(file_missing(File))),
 
 	parse(File, Tree),
-
+	%format(user_error, "parsed: ~w~n", [Tree]),
+	
 	check(Tree, Env, NTree),
+	%format(user_error, "checked: ~w~n", [NTree]),
 
-    compile(Opts, Env, NTree, Code),
-    
-    format(user_error, "OK~n", []),
-    writeln(Code).
+	compile(Opts, Env, NTree, Code),
+	%format(user_error, "compiled: ~w~n", [Code]),
+	
+	format(user_error, "OK~n", []),
+	writeln(Code).
 
