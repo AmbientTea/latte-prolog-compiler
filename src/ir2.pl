@@ -165,6 +165,10 @@ exp(Env, new(Type), Reg, Dep) -->
     empty_deps(Dep),
     malloc(Env, class(Type), 1, Reg).
 
+exp(Env, new_arr(Type, LenExp), Reg, Dep) -->
+    exp(Env, LenExp, LenV, Dep),
+    malloc(Env, Type, LenV, Reg).
+
 exp(Env, field(Class, Exp, Field), Reg, Dep) -->
     exp(Env, Exp, ExpV, Dep),
     load(Env, field(Class, ExpV, Field), Reg).
@@ -262,10 +266,10 @@ leftval(Env, field(Class, Exp, Field), ptr(Type, Ptr), Dep) -->
     [ Ptr = getmemberptr(ref(class(Class)), Obj, Pos) ].
 
 % allocate Len objects of type Class
-malloc(Env, class(Class), Len, Reg) -->
-    { Size is Len * Env.class_size(Class) },
+malloc(Env, Type, Len, Reg) -->
+    { Size is Len * Env.type_size(Type) },
     [ Reg1 = call(string, malloc, [(Size, int)]) ],
-    [ Reg = cast(Reg1, string, ref(class(Class))) ].
+    [ Reg = cast(Reg1, string, ref(Type)) ].
 
 
 store(reg(Reg), Val) --> { Reg = Val }.

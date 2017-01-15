@@ -52,6 +52,8 @@ exception_message(bad_field(Class, Field)) -->
     "access to non-existent field ", atom(Field), " in class ", atom(Class).
 exception_message(bad_cast(Exp, From, To)) -->
     "illegal cast of expression: ", atom(Exp), " of type ", atom(From), " to ", atom(To).
+exception_message(bad_new_len(Exp, Type)) -->
+    "expression ", atom(Exp), " of non-int type ", atom(Type), " used as array length".
 % statements
 exception_message(dupl_decl(Id)) -->
     "variable ", atom(Id), " already declared in its scope".

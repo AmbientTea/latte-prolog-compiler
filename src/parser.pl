@@ -27,7 +27,7 @@ parse(_File, _Tree) :- throw(parsing_fail).
 
 keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new, null]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
-            "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", "."]).
+            "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", ".", "[", "]"]).
 
 id(Id) --> [Start], { code_type(Start, alpha) }, id_cont(Cont), { atom_codes(Id, [Start | Cont]) }.
 id_cont([H|T]) --> [H], { code_type(H, csym) }, id_cont(T).
@@ -142,8 +142,11 @@ stmt(expstmt(Exp)) --> exp(Exp), [;].
 
 % type
 simple_types([void, int, boolean, string]).
-type(T) --> { simple_types(Tps), member(T, Tps) }, [T].
-type(ref(class(T))) --> [ id(T) ].
+stype(T) --> { simple_types(Tps), member(T, Tps) }, [T], !.
+stype(ref(class(T))) --> [ id(T) ], !.
+
+type(array(T)) --> stype(T), ['[', ']'].
+type(T) --> stype(T).
 
 %
 % LEFT VALUES %
@@ -171,6 +174,7 @@ sexp(true) --> [true], !.
 sexp(false) --> [false], !.
 sexp(null) --> [null], !.
 sexp(new(Type)) --> [ new, id(Type) ].
+sexp(new_arr(Type, Exp)) --> [ new ], type(Type), ['['], !, exp(Exp), [']'], !.
 
 % logical
 :- op(600, xfy, '&&').

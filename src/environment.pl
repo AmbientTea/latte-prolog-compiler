@@ -29,9 +29,14 @@ M.add_string(Str) := M.put(strings, SS) :-
 M.add_class(Class, Fields, _Methods) := M.put(classes/Class, ClassInfo) :-
     ClassInfo = class{ fields: Fields }.
 
-M.class_size(Class) := Size :-
+M.type_size(class(Class)) := Size :-
     length(M.classes.Class.fields, Len),
     Size is Len * 4.
+_M.type_size(int) := 4.
+_M.type_size(boolean) := 4.
+_M.type_size(string) := 4.
+_M.type_size(ref(_)) := 4.
+_M.type_size(array(_)) := 4.
 
 % FUNCTION CONTEXT
 M.enter_function(Fun, Ret) :=
