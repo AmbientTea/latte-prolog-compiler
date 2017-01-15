@@ -4,10 +4,11 @@ function test_bad() {
     DIR=$1;
     HEADER=$2;
     
-    echo $HEADER:
+    echo
+    echo $HEADER: $DIR
     for file in `ls $DIR/*.lat`; do
-    printf "%-60s ... " $file
-    echo `./latc $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
+        printf "%-36s ... " `basename $file`
+        echo `./latc $file 2>&1 >/dev/null | head -n2 | tr "\n" "  "`
     done;
 }
 
@@ -15,12 +16,13 @@ function test_good() {
     DIR=$1;
     HEADER=$2;
     
-    echo $HEADER:
+    echo
+    echo $HEADER: $DIR
     
     
     for file in `ls $DIR/*.lat`; do
         out=`dirname $file`/`basename $file .lat`.output
-        printf "compile %-60s ... " $file
+        printf "compile %-46s ... " `basename $file`
         
         PROG=`./latc $file 2> >(head -n 1 | tr -d "\n" 1>&2 )`
         if [ $? != 0 ]; then exit; fi
@@ -41,6 +43,7 @@ test_bad "tests/bad/" "BASIC"
 test_bad "tests/mrjp-tests/bad/semantic" "COMMUNITY BASIC"
 test_bad "tests/mrjp-tests/bad/runtime" ""
 
+echo
 echo ========== COMPILER TESTS: =============
 test_good "tests/good/" "BASIC"
 test_good "tests/mrjp-tests/good/basic" "COMMUNITY BASIC"
