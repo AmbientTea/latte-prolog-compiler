@@ -80,19 +80,27 @@ or_merge(Dep1, Dep2, Dep) --> {
         block_in: _BlockIn,
         block_out: _BlockOut
         },
-    Ask set_is Dep1.ask + Dep2.ask,
+    
+    % variables one branch does not use at all
+    Ask1 set_is (Dep2.mod - Dep1.ask) - Dep1.mod,
+    Ask2 set_is (Dep1.mod - Dep2.ask) - Dep2.mod,
+    union(Ask1.keys(), Ask2.keys(), AskKeys),
+    maplist(fst(-), M, AskKeys),
+    dict_pairs(D, _, M),
+    
+    Ask set_is Dep1.ask + Dep2.ask + D,
     union(Dep1.mod.keys(), Dep2.mod.keys(), ModKeys)
     },
     
-    dcg_map(or_merge_phi(Dep1, Dep2), ModKeys, NewRegs),
+    dcg_map(or_merge_phi(Dep1, Dep2, Ask), ModKeys, NewRegs),
     
     { dict_pairs(Mod, e, NewRegs) }.
 
-or_merge_phi(Dep1, Dep2, Key, Key - (Type - Reg)) -->
+or_merge_phi(Dep1, Dep2, Ask, Key, Key - (Type - Reg)) -->
     [ Reg = phi(Type, [(V1, Dep1.block_out), (V2, Dep2.block_out)]) ],
     {
-        (Type - V1 = Dep1.mod.get(Key), ! ; Type - V1 = Dep1.ask.get(Key)),
-        (Type - V2 = Dep2.mod.get(Key), ! ; Type - V2 = Dep2.ask.get(Key))
+        (Type - V1 = Dep1.mod.get(Key), ! ; Type - V1 = Dep1.ask.get(Key) ; Type - V1 = Ask.get(Key)),
+        (Type - V2 = Dep2.mod.get(Key), ! ; Type - V2 = Dep2.ask.get(Key) ; Type - V2 = Ask.get(Key))
     }.
 
 % [e * i] merges environments of the instruction and condition of WHILE statement
