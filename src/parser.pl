@@ -145,7 +145,7 @@ simple_types([void, int, boolean, string]).
 stype(T) --> { simple_types(Tps), member(T, Tps) }, [T], !.
 stype(ref(class(T))) --> [ id(T) ], !.
 
-type(array(T)) --> stype(T), ['[', ']'].
+type(ref(array(T))) --> stype(T), ['[', ']'].
 type(T) --> stype(T).
 
 %

@@ -21,7 +21,7 @@ leftval( field(Exp, Field), FieldType, field(Class, NExp, Field) ) -->
 
 leftval( arr_index(ArrExp, IndExp), Type, arr_index(Type, NArrExp, NIndExp) ) -->
     types(ArrExp, ArrType, NArrExp),
-    { ArrType = array(Type) or_else throw(not_array(ArrExp, ArrType)) },
+    { ArrType = ref(array(Type)) or_else throw(not_array(ArrExp, ArrType)) },
     types(IndExp, IndType, NIndExp),
     { IndType == int or_else throw(bad_index_type(IndExp, IndType)) }.
 

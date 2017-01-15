@@ -34,7 +34,7 @@ types( new(Type), ref(class(Type)), new(Type) ) -->
 %    { format(user_error, "~w~n", [new : Type]) },
     { Env.classes ? get(Type) or_else throw(bad_class(Type)) }.
 
-types( new_arr(Type, Exp), array(Type), new_arr(Type, NExp) ) -->
+types( new_arr(Type, Exp), ref(array(Type)), new_arr(Type, NExp) ) -->
     types(Exp, ExpType, NExp),
     { ExpType == int or_else throw(bad_new_len(Exp, ExpType)) }.
 

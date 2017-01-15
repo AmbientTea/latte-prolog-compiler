@@ -36,7 +36,7 @@ _M.type_size(int) := 4.
 _M.type_size(boolean) := 4.
 _M.type_size(string) := 4.
 _M.type_size(ref(_)) := 4.
-_M.type_size(array(_)) := 4.
+_M.type_size(array(_)) := 8.
 
 % FUNCTION CONTEXT
 M.enter_function(Fun, Ret) :=

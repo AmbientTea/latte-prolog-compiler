@@ -48,7 +48,7 @@ type(boolean) --> "i1".
 type(void) --> "void".
 type(class(Type)) --> "%", atom(Type).
 type(ref(Type)) --> type(Type), "*".
-type(array(Type)) --> type(Type), "*".
+type(array(Type)) --> "{ i32, ", type(ref(Type)), "}".
 
 types(Types) --> separated(", ", type, Types).
 

@@ -165,9 +165,18 @@ exp(Env, new(Type), Reg, Dep) -->
     empty_deps(Dep),
     malloc(Env, class(Type), 1, Reg).
 
-exp(Env, new_arr(Type, LenExp), Reg, Dep) -->
+exp(Env, new_arr(Type, LenExp), StrPtr, Dep) -->
     exp(Env, LenExp, LenV, Dep),
-    malloc(Env, Type, LenV, Reg).
+    % allocate array structure: { i32 length, T* array }
+    malloc(Env, array(Type), 1, StrPtr),
+    % allocate array itself
+    malloc(Env, Type, LenV, Array),
+    % save length
+    [ LenPtr = getptr(array(Type), StrPtr, [0, 0]) ],
+    store(ptr(int, LenPtr), LenV),
+    % save array pointer
+    [ ArrPtr = getptr(array(Type), StrPtr, [0, 1]) ],
+    store(ptr(ref(Type), ArrPtr), Array).
 
 exp(Env, LeftExp, Reg, Dep) -->
     leftval(Env, LeftExp, LeftVal, Dep),
@@ -270,7 +279,8 @@ leftval(Env, arr_index(Type, ArrExp, IndExp), ptr(Type, Ptr), Dep) -->
     exp(Env, ArrExp, ArrV, ArrDep),
     exp(Env, IndExp, IndV, IndDep),
     expression_merge(ArrDep, IndDep, Dep),
-    [ Ptr = getptr(Type, ArrV, [IndV]) ].
+    [ ArrPtr = getptr(array(Type), ArrV, [1, 0]) ],
+    [ Ptr = getptr(Type, ArrPtr, [IndV]) ].
 % allocate Len objects of type Class
 malloc(Env, Type, Len, Reg) -->
     { Size is Len * Env.type_size(Type) },
