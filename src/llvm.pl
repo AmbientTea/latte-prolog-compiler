@@ -87,8 +87,10 @@ operator(>, "icmp sgt", "i32", "i1").
 operator('<=', "icmp sle", "i32", "i1").
 operator('>=', "icmp sge", "i32", "i1").
 
-% functions
-% topdef(Def) --> { format(user_error, "topdef: ~w~n", [Def]), fail }.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% TOP LEVEL DEFINITIONS %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 topdef(function(Type, Fun, Args, Body)) -->
     "define ", type(Type), " @", atom(Fun), "(", args(Args), "){",
     stmts(Body),
@@ -112,7 +114,10 @@ indent(_) --> "    ".
 stmts([]) --> [].
 stmts([H|T]) --> "\n", indent(H), stmt(H), !, stmts(T).
 
-% statements
+%%%%%%%%%%%%%%%%%%
+%%% STATEMENTS %%%
+%%%%%%%%%%%%%%%%%%
+
 stmt(block(B)) --> atom(B), ":".
 
 stmt(V = Right ) --> atom(V), " = ", rightval(Right).
@@ -135,7 +140,10 @@ stmt(store(Type, Ptr, Val)) -->
 
 stmt(S) --> "*unrecognized*: ", atom(S).
 
-% assignment values
+%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% ASSIGNMENT VALUES %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
 rightval(null) --> "null".
 rightval(phi(Type, Args)) -->
     "phi ", type(Type), " ", separated(", ", phi_arg, Args).
@@ -143,26 +151,29 @@ rightval(phi(Type, Args)) -->
 rightval(call(Type, Fun, Args)) -->
     "call ", type(Type), " @", atom(Fun), "(", args(Args), ")".
 
+%%% STRING CONSTANTS %%%
 rightval(strcast(Len, Lab, 0)) -->
     "bitcast [", atom(Len), " x i8]* ", atom(Lab), " to i8*".
 
-rightval(cast(V, From, To)) -->
-    "bitcast ", type(From), " ", atom(V), " to ", type(To).
 % complex constant expression to access a suffix of a string
 %0 = getelementptr i8, i8* bitcast ([8 x i8]* @str0 to i8*), i32 1
 rightval(strcast(Len, Lab, Ind)) -->
     "getelementptr i8, i8* bitcast ([", atom(Len), " x i8]* ", atom(Lab), " to i8*), i32 ", atom(Ind).
 
-rightval(getmemberptr(ref(class(Class)), Ptr, Pos)) -->
-    "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
+%%% POINTER HANDLING %%%
+rightval(cast(V, From, To)) -->
+    "bitcast ", type(From), " ", atom(V), " to ", type(To).
+
+rightval(getmemberptr(ref(Class), Ptr, Pos)) -->
+    "getelementptr ", type(Class), ", ", type(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
 
 rightval(getelemptr(Type, Arr, Ind)) -->
     "getelementptr ", type(Type), ", ", type(array(Type)), " ", atom(Arr), ", i32 ", atom(Ind).
     
-
 rightval(load(Type, Reg)) -->
-    "load ", type(Type), ", ", type(Type), "* ", atom(Reg).
+    "load ", type(Type), ", ", type(ref(Type)), " ", atom(Reg).
 
+%%% OPERATORS %%%
 rightval(OpE) -->
     { OpE =.. [Op, V1, V2], operator(Op, LLOp, InT, _) },
     LLOp, " ", InT, " ", atom(V1), ", ", atom(V2).
