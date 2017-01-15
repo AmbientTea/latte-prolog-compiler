@@ -156,6 +156,10 @@ rightval(strcast(Len, Lab, Ind)) -->
 rightval(getmemberptr(ref(class(Class)), Ptr, Pos)) -->
     "getelementptr %", atom(Class), ", %", atom(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
 
+rightval(getelemptr(Type, Arr, Ind)) -->
+    "getelementptr ", type(Type), ", ", type(array(Type)), " ", atom(Arr), ", i32 ", atom(Ind).
+    
+
 rightval(load(Type, Reg)) -->
     "load ", type(Type), ", ", type(Type), "* ", atom(Reg).
 

@@ -153,7 +153,8 @@ type(T) --> stype(T).
 %
 
 leftval(var(Id)) --> [ id(Id) ].
-leftval(field(Exp, Field)) --> !, sexp(Exp), ['.'], !, [id(Field)], !.
+leftval(field(Exp, Field)) --> sexp(Exp), ['.'], !, [id(Field)], !.
+leftval(arr_index(Arr, Ind)) --> sexp(Arr), ['['], aexp(Ind), [']'], !.
 
 %%%%%%%%%%%%%%%%%%%
 %%% expressions %%%

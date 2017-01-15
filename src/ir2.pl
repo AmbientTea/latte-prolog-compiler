@@ -265,6 +265,11 @@ leftval(Env, field(Class, Exp, Field), ptr(Type, Ptr), Dep) -->
     { nth0(Pos, Env.classes.Class.fields, Field - Type) },
     [ Ptr = getmemberptr(ref(class(Class)), Obj, Pos) ].
 
+leftval(Env, arr_index(Type, ArrExp, IndExp), ptr(Type, Ptr), Dep) -->
+    exp(Env, ArrExp, ArrV, ArrDep),
+    exp(Env, IndExp, IndV, IndDep),
+    expression_merge(ArrDep, IndDep, Dep),
+    [ Ptr = getelemptr(Type, ArrV, IndV) ].
 % allocate Len objects of type Class
 malloc(Env, Type, Len, Reg) -->
     { Size is Len * Env.type_size(Type) },
