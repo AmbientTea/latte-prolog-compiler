@@ -54,6 +54,10 @@ exception_message(bad_cast(Exp, From, To)) -->
     "illegal cast of expression: ", atom(Exp), " of type ", atom(From), " to ", atom(To).
 exception_message(bad_new_len(Exp, Type)) -->
     "expression ", atom(Exp), " of non-int type ", atom(Type), " used as array length".
+exception_message(not_array(Exp, Type)) -->
+    "tried to index expression ", atom(Exp), " of non-array type ", atom(Type).
+exception_message(bad_index_type(Exp, Type)) -->
+    "expression ", atom(Exp), " of non-int type ", atom(Type), " used as array index".
 % statements
 exception_message(dupl_decl(Id)) -->
     "variable ", atom(Id), " already declared in its scope".
