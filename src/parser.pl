@@ -160,7 +160,7 @@ leftval(arr_index(Arr, Ind)) --> sexp(Arr), ['['], aexp(Ind), [']'], !.
 %%% expressions %%%
 %%%%%%%%%%%%%%%%%%%
 
-exp(E) --> orexp(E) ; leftval(E).
+exp(E) --> orexp(E).
 
 
 % simple
@@ -199,4 +199,4 @@ lexp(E) --> aexp(E1), [Op], { member(Op, [<,>,'<=','>=',==,'!=']) }, !, lexp(E2)
 aexp(E) --> mexp(E1), ([Op], { member(Op, [+,-]) }, !, aexp(E2), { E =.. [Op, E1, E2] } ; {E = E1}).
 
 % multiplicative
-mexp(E) --> sexp(E1), ( [Op], { member(Op, [*,/,'%']) }, !, mexp(E2), { E =.. [Op, E1, E2] } ; {E = E1}).
+mexp(E) --> (leftval(E1) ; sexp(E1)), ( [Op], { member(Op, [*,/,'%']) }, !, mexp(E2), { E =.. [Op, E1, E2] } ; {E = E1}).
