@@ -164,12 +164,10 @@ rightval(strcast(Len, Lab, Ind)) -->
 rightval(cast(V, From, To)) -->
     "bitcast ", type(From), " ", atom(V), " to ", type(To).
 
-rightval(getmemberptr(ref(Class), Ptr, Pos)) -->
-    "getelementptr ", type(Class), ", ", type(Class), "* ", atom(Ptr), ", i32 0, i32 ", atom(Pos).
+rightval(getptr(Type, Ptr, Inds)) -->
+    "getelementptr ", type(Type), ", ", type(ref(Type)), " ", atom(Ptr), ", i32 ",
+        separated(", i32 ", atom, Inds).
 
-rightval(getelemptr(Type, Arr, Ind)) -->
-    "getelementptr ", type(Type), ", ", type(array(Type)), " ", atom(Arr), ", i32 ", atom(Ind).
-    
 rightval(load(Type, Reg)) -->
     "load ", type(Type), ", ", type(ref(Type)), " ", atom(Reg).
 
