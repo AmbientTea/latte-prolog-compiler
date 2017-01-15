@@ -24,6 +24,9 @@ types(cast(Type, Exp), Type, NCast) -->
     % NCast = cast(Type, ExpType, NExp)
     ; throw(bad_cast(Exp, ExpType, Type)) }.
 
+types(field(Exp, length), int, arr_length(Type, NExp)) -->
+    types(Exp, ref(array(Type)), NExp), !.
+
 %%% VARIABLES %%%
 types( LeftVal, Type, NLeftVal ) -->
     leftval(LeftVal, Type, NLeftVal).

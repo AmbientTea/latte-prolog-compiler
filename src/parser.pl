@@ -174,8 +174,8 @@ sexp(var(V)) --> [id(V)], !.
 sexp(true) --> [true], !.
 sexp(false) --> [false], !.
 sexp(null) --> [null], !.
-sexp(new(Type)) --> [ new, id(Type) ].
 sexp(new_arr(Type, Exp)) --> [ new ], type(Type), ['['], !, exp(Exp), [']'], !.
+sexp(new(Type)) --> [ new, id(Type) ].
 
 % logical
 :- op(600, xfy, '&&').

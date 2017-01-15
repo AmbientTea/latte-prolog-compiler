@@ -178,6 +178,11 @@ exp(Env, new_arr(Type, LenExp), StrPtr, Dep) -->
     [ ArrPtr = getptr(array(Type), StrPtr, [0, 1]) ],
     store(ptr(ref(Type), ArrPtr), Array).
 
+exp(Env, arr_length(Type, Exp), Reg, Dep) -->
+    exp(Env, Exp, ArrPtr, Dep),
+    [ LenPtr = getptr(array(Type), ArrPtr, [0, 0]) ],
+    load(ptr(int, LenPtr), Reg).
+
 exp(Env, LeftExp, Reg, Dep) -->
     leftval(Env, LeftExp, LeftVal, Dep),
     load(LeftVal, Reg).
