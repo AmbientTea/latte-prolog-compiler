@@ -121,7 +121,7 @@ init(noinit(Id)) --> [id(Id)].
 
 stmt( skip ) --> [;], !.
 
-stmt( decl(Type, Ins) ) --> type(Type), separated([,], init, Ins), [;].
+stmt( decl(Type, Ins) ) --> type(Type), separated([,], init, Ins), { Ins \= [] }, [;].
 
 stmt( =(Left, Exp) ) --> leftval(Left), [=], exp(Exp), [;].
 
