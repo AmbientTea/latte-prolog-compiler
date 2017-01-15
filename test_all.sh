@@ -48,3 +48,4 @@ echo ========== COMPILER TESTS: =============
 test_good "tests/good/" "BASIC"
 test_good "tests/mrjp-tests/good/basic" "COMMUNITY BASIC"
 test_good "tests/extensions/struct" "STRUCT"
+test_good "tests/extensions/arrays1" "ARRAYS"
