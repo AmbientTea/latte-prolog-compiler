@@ -284,8 +284,9 @@ leftval(Env, arr_index(Type, ArrExp, IndExp), ptr(Type, Ptr), Dep) -->
     exp(Env, ArrExp, ArrV, ArrDep),
     exp(Env, IndExp, IndV, IndDep),
     expression_merge(ArrDep, IndDep, Dep),
-    [ ArrPtr = getptr(array(Type), ArrV, [1, 0]) ],
-    [ Ptr = getptr(Type, ArrPtr, [IndV]) ].
+    [ ArrPtr = getptr(array(Type), ArrV, [0, 1]) ],
+    load(ptr(ref(Type), ArrPtr), Arr),
+    [ Ptr = getptr(Type, Arr, [IndV]) ].
 % allocate Len objects of type Class
 malloc(Env, Type, Len, Reg) -->
     { Size is Len * Env.type_size(Type) },
@@ -385,6 +386,42 @@ stmt(Env, while(While, Do), Dep) -->
     
     { Dep = Dep1.put(block_in, BlockIn).put(block_out, EndBlock) }
 . % while
+
+stmt(Env, for(Type, Var, ArrExp, Do), Dep) -->
+    empty_deps(EmptyDeps),
+    exp(Env, ArrExp, ArrStrPtr, ArrDep),
+    % get length
+    [ LenPtr = getptr(array(Type), ArrStrPtr, [0, 0]) ],
+    load(ptr(int, LenPtr), Len),
+    % get array
+    [ ArrPtr = getptr(array(Type), ArrStrPtr, [0, 1]) ],
+    load(ptr(ref(Type), ArrPtr), Arr),
+    % boundary pointer
+    [ EndPtr = getptr(Type, Arr, [Len]) ],
+    [ jump(CondBlock) ],
+    
+    [ block(DoBlock) ],
+    load(ptr(Type, ElemPtr), Elem),
+    
+    stmt(Env, Do, DoDep),
+    { DoDep.block_in = DoBlock },
+    semicolon_merge(EmptyDeps.put(gen/Var, Type - Elem), DoDep, DoDep1),
+    [ ElemPtr2 = getptr(Type, ElemPtr, [1]) ],
+    [ jump(CondBlock) ],
+    
+    [ block(CondBlock) ],
+    leave_gap(MergeGap),
+    [ ElemPtr = phi(ref(Type), [(Arr, BlockIn), (ElemPtr2, DoDep.block_out)]) ],
+    [ C = '=='(ref(Type), ElemPtr, EndPtr) ],
+    [ if(C, EndBlock, DoBlock) ],
+    
+    [ block(EndBlock) ],
+    
+    
+    fill_gap(MergeGap, while_merge(BlockIn, EmptyDeps, DoDep1, Dep1)),
+    { Dep2 = Dep1.put(block_in, BlockIn).put(block_out, EndBlock) },
+    semicolon_merge(ArrDep, Dep2, Dep).
+    
 
 %%%%%%%%%%%%%%%
 %%% CLASSES %%%

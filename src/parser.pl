@@ -25,9 +25,9 @@ parse(_File, _Tree) :- throw(parsing_fail).
 %%% LEXER %%%
 %%%%%%%%%%%%%	
 
-keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new, null]).
+keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new, null, for]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
-            "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", ".", "[", "]"]).
+            "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", ".", "[", "]", ":"]).
 
 id(Id) --> [Start], { code_type(Start, alpha) }, id_cont(Cont), { atom_codes(Id, [Start | Cont]) }.
 id_cont([H|T]) --> [H], { code_type(H, csym) }, id_cont(T).
@@ -129,6 +129,8 @@ stmt(if(If, Then, Else)) --> [if, '('], exp(If), [')'], stmt(Then), [else], stmt
 stmt(if(If, Then)) --> [if, '('], exp(If), [')'], stmt(Then).
 
 stmt(while(While, Do)) --> [while, '('], exp(While), [')'], stmt(Do).
+stmt(for(Type, Var, Arr, Do)) -->
+    [for, '('], type(Type), [id(Var), :], exp(Arr), [')'], stmt(Do).
 
 stmt(return(E)) --> [return], exp(E), [;], !.
 stmt(return) --> [return], [;], !.
