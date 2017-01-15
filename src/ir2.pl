@@ -169,9 +169,9 @@ exp(Env, new_arr(Type, LenExp), Reg, Dep) -->
     exp(Env, LenExp, LenV, Dep),
     malloc(Env, Type, LenV, Reg).
 
-exp(Env, field(Class, Exp, Field), Reg, Dep) -->
-    exp(Env, Exp, ExpV, Dep),
-    load(Env, field(Class, ExpV, Field), Reg).
+exp(Env, LeftExp, Reg, Dep) -->
+    leftval(Env, LeftExp, LeftVal, Dep),
+    load(LeftVal, Reg).
 
 exp(Env, app(Fun, ArgExps), V, Dep) -->
     exps(Env, ArgExps, ArgVals, Dep),
@@ -275,10 +275,10 @@ malloc(Env, Type, Len, Reg) -->
 store(reg(Reg), Val) --> { Reg = Val }.
 store(ptr(Type, Ptr), Val) --> [ store(Type, Ptr, Val) ].
 
-load(Env, field(Class, Ptr, Field), Reg) -->
-    { nth0(Pos, Env.classes.Class.fields, Field - Type) },
-    [ Reg1 = getmemberptr(ref(class(Class)), Ptr, Pos) ],
-    [ Reg = load(Type, Reg1) ].
+load(ptr(Type, Ptr), Reg) -->
+    [ Reg = load(Type, Ptr) ].
+load(reg(Reg), Reg) --> [].
+    
     
 
 %%%%%%%%%%%%%%%%%%
