@@ -26,8 +26,8 @@ M.add_fun(Fun, Type, ArgTypes) := M.put(functions, [Fun - FunInfo | M.functions]
 M.add_string(Str) := M.put(strings, SS) :-
     union([Str - _Label - _Length - _Index], M.strings, SS).
 
-M.add_class(Class, Fields, _Methods) := M.put(classes/Class, ClassInfo) :-
-    ClassInfo = class{ fields: Fields }.
+M.add_class(Class, Fields, Methods) := M.put(classes/Class, ClassInfo) :-
+    ClassInfo = class{ fields: Fields, methods: Methods }.
 
 M.type_size(class(Class)) := Size :-
     length(M.classes.Class.fields, Len),

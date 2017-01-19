@@ -17,8 +17,18 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
 declare_top(class_def(Name, Fields, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Name)) or_else throw(dupl_class(Name)) },
-    do_state add_class(Name, Fields, Methods).
+    % add variables for real function names
+    { maplist(method_type, Methods, MethodTypes) },
+    { maplist(method_info, Methods, MethodInfosL),
+      dict_pairs(MethodInfos, methods, MethodInfosL) },
+    do_state add_class(Name, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos).
 
+method_info(Id - Type - Args - _Body,
+            Id - fun{ return: Type, args: ArgTypes, label: _Label}) :-
+  maplist(snd, Args, ArgTypes).
+
+method_type(_Id - Type - Args - _Block, function(Type, ArgTypes)) :-
+    maplist(snd, Args, ArgTypes).
 %
 % FUNCTION DEFINITIONS
 %
@@ -51,7 +61,5 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
 correct_topdef(class_def(Name, Fields, Methods),
                class_def(Name, Fields, Methods)) -->
     { maplist(fst(-), Fields, FieldNames) },
-    { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) },
-    { Methods == [] or_else throw(not_implemented("class methods")) }.
-
+    { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) }.
 
