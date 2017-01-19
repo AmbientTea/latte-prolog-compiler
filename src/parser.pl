@@ -109,7 +109,8 @@ class_def(class_def(Name, Fields, Methods)) -->
 
 class_subdef((Fields, Methods), ([(Id - Type)|Fields], Methods)) -->
     type(Type), [ id(Id), ;].
-
+class_subdef((Fields, Methods), (Fields, [(Id - Type - Args - Block) | Methods])) -->
+    fun_def(fun_def(Type, Id, Args, Block)).
 %%%%%%%%%%%%%%%%%%
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
