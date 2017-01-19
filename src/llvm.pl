@@ -49,6 +49,8 @@ type(void) --> "void".
 type(class(Type)) --> "%", atom(Type).
 type(ref(Type)) --> type(Type), "*".
 type(array(Type)) --> "{ i32, ", type(ref(Type)), "}".
+type(function(RetType, ArgTypes)) -->
+    type(RetType), " (", separated(", ", type, ArgTypes), ")*".
 
 types(Types) --> separated(", ", type, Types).
 
