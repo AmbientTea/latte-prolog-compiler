@@ -1,5 +1,9 @@
 **/*.out
-*.test
+./*.test
+./*.ll
+./*.bc
+./*.tar.gz
+
 
 tests/**/*.ll
 tests/**/*.bc
