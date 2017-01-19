@@ -9,11 +9,10 @@ else
     OUT=`dirname $IN`/`basename $IN .lat`.out
 fi;
 
-echo $OUT
-
 LLF=`dirname $OUT`/`basename $OUT .out`.ll
 BCF=`dirname $OUT`/`basename $OUT .out`.bc
 
 src/latc.pl $IN > $LLF &&
-llvm-as < $LLF > $BCF &&
-llvm-link $BCF lib/runtime.bc -o $OUT && chmod +x $OUT
+    llvm-as < $LLF > $BCF &&
+    llvm-link $BCF lib/runtime.bc -o $OUT && chmod +x $OUT &&
+    echo $OUT
