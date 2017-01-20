@@ -55,6 +55,10 @@ type(function(RetType, ArgTypes)) -->
 
 types(Types) --> separated(", ", type, Types).
 
+value(reg(Reg)) --> "%", atom(Reg).
+value(glob(Glob)) --> "@", atom(Glob).
+value(V) --> atom(V).
+
 % arguments
 fun_arg((Var, Type)) --> type(Type), " ", atom(Var).
 args(Args) --> separated(", ", fun_arg, Args).
@@ -147,7 +151,7 @@ stmt(ret(Type, V)) --> "ret ", type(Type), " ", atom(V).
 stmt(unreachable) --> "unreachable".
 
 stmt(store(Type, Ptr, Val)) -->
-    "store ", type(Type), " ", atom(Val), ", ", type(Type), "* ", atom(Ptr).
+    "store ", type(Type), " ", value(Val), ", ", type(Type), "* ", atom(Ptr).
 
 stmt(S) --> "*unrecognized*: ", atom(S).
 
