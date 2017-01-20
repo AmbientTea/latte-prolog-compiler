@@ -14,20 +14,20 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
-declare_top(class_def(Name, Fields, Methods)) -->
+declare_top(class_def(Class, Fields, Methods)) -->
     get_state(Env),
-    { \+ (Env.classes ? get(Name)) or_else throw(dupl_class(Name)) },
+    { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     % add variables for real function names
-    { maplist(method_type, Methods, MethodTypes) },
-    { maplist(method_info, Methods, MethodInfosL),
-      dict_pairs(MethodInfos, methods, MethodInfosL) },
-    do_state add_class(Name, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos).
+    { maplist(method_type(Class), Methods, MethodTypes) },
+    { maplist(method_info(Class), Methods, MethodInfos) },
+    do_state add_class(Class, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos).
 
-method_info(Id - Type - Args - _Body,
-            Id - fun{ return: Type, args: ArgTypes, label: _Label}) :-
-  maplist(snd, Args, ArgTypes).
+method_info(Class, Id - Type - Args - _Body,
+            Id - fun{ return: Type, args: ArgTypes, label: Label}) :-
+  maplist(snd, Args, ArgTypes),
+  atomic_list_concat(['$', Class, '_', Id], Label).
 
-method_type(_Id - Type - Args - _Block, function(Type, ArgTypes)) :-
+method_type(Class, _Id - Type - Args - _Block, function(Type, [ref(class(Class)) | ArgTypes])) :-
     maplist(snd, Args, ArgTypes).
 %
 % FUNCTION DEFINITIONS
@@ -58,15 +58,15 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
 % CLASS DEFINITIONS
 %
 
-correct_topdef(class_def(Name, Fields, Methods),
-               class_def(Name, Fields, Methods1)) -->
+correct_topdef(class_def(Class, Fields, Methods),
+               class_def(Class, Fields, Methods1)) -->
     { maplist(fst(-), Fields, FieldNames) },
     { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) },
-    dcg_map(correct_method(Name), Methods, Methods1).
+    dcg_map(correct_method(Class), Methods, Methods1).
 
 
 correct_method(Class, Fun - Return - Args - Body,
-                      fun_def(Return, Fun, Args1, NBody)) -->
+                      fun_def(Return, NFun, Args1, NBody)) -->
     do_state enter_method(Class, Fun, Return),
     { Args1 = [('$instance', ref(class(Class))) | Args] },
     dcg_map(declare_arg, Args1),
@@ -80,6 +80,8 @@ correct_method(Class, Fun - Return - Args - Body,
             append(NBody1, [return], NBody)
         ; throw( no_return(Fun) ) )
     ; NBody = NBody1 },
+    
+    { member(Fun - FunInfo, State.classes.Class.methods), NFun = FunInfo.label },
     
     do_state exit_method().
                 

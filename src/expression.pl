@@ -84,6 +84,19 @@ types(app(Fun, Args), Type, app(Fun, NArgs)) -->
     { Type = FunInfo.return },
     { ArgTypes = FunInfo.args or_else throw(bad_args(Fun, FunInfo.args, ArgTypes)) }.
 
+types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, NArgs)) -->
+    get_state(Env),
+    types(Exp, EType, NExp),
+    
+    { EType = ref(class(Class)) or_else throw(non_class_method_call(Exp, Meth, EType)) },
+    
+    { member(Meth - MethInfo, Env.classes.Class.methods) or_else throw(bad_method_call(Class, Meth)) },
+    
+    all_type(Args, ArgTypes, NArgs),
+    
+    { ArgTypes = MethInfo.args or_else throw(bad_args(Class:Meth, MethInfo.args, ArgTypes)) },
+    { Type = MethInfo.return }.
+
 %%%%%%%%%%%%%%%
 %%% HELPERS %%%
 %%%%%%%%%%%%%%%

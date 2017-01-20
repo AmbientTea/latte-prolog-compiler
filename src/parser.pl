@@ -156,6 +156,8 @@ type(T) --> stype(T).
 %
 
 leftval(var(Id)) --> [ id(Id) ].
+
+leftval(method(Exp, Meth, Args)) --> sexp(Exp), ['.'], [id(Meth), '('], !, separated([,], exp, Args), [')'].
 leftval(field(Exp, Field)) --> sexp(Exp), ['.'], !, [id(Field)], !.
 leftval(arr_index(Arr, Ind)) --> sexp(Arr), ['['], aexp(Ind), [']'], !.
 

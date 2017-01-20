@@ -58,6 +58,10 @@ exception_message(not_array(Exp, Type)) -->
     "tried to index expression ", atom(Exp), " of non-array type ", atom(Type).
 exception_message(bad_index_type(Exp, Type)) -->
     "expression ", atom(Exp), " of non-int type ", atom(Type), " used as array index".
+exception_message(non_class_method_call(Exp, Meth, Type)) -->
+    "method ", atom(Meth), " called on expression ", atom(Exp), " of non-class type ", atom(Type).
+exception_message(bad_method_call(Class, Meth)) -->
+    "undefined method ", atom(Meth), " called on an object of class type ", atom(Class).
 % statements
 exception_message(dupl_decl(Id)) -->
     "variable ", atom(Id), " already declared in its scope".
