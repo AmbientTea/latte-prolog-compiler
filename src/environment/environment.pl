@@ -6,6 +6,8 @@
     op(600, fx, pushed), pushed//1
 ]).
 
+:- use_module(method).
+
 emptyenv( environment{
     classes: classes{},
     functions : [
