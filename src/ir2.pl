@@ -437,9 +437,14 @@ stmt(Env, for(Type, Var, ArrExp, Do), Dep) -->
 class_definition(Env, class_def(_Name, _Fields, Methods)) -->
   dcg_map(function_definition(Env), Methods).
 
-class_declaration(Name - Info) -->
+class_declaration(Class - Info) -->
     { maplist(snd(-), Info.fields, FieldTypes) },
-    [ class(Name, FieldTypes) ].
+    { maplist(vtable_info(Class), Info.methods, MethodTypes, Methods) },
+    [ class(Class, FieldTypes, vtable(Info.vtable_label, MethodTypes, Methods)) ]
+.
+vtable_info(Class, _Meth - Info,
+            function(Info.return, [ref(class(Class)) | Info.args]),
+            (Info.label, function(Info.return, [ref(class(Class)) | Info.args]))).
 
 %%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%
