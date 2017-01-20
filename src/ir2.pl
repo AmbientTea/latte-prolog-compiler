@@ -324,7 +324,7 @@ leftval(Env, arr_index(Type, ArrExp, IndExp), ptr(Type, Ptr), Dep) -->
 % allocate Len objects of type Class
 malloc(Env, Type, Len, Reg) -->
     [ Size = Len * Env.type_size(Type) ],
-    [ Reg1 = call(string, glob(malloc), [(Size, int)]) ],
+    [ Reg1 = call(string, glob(calloc), [(Size, int)]) ],
     [ Reg = cast(Reg1, string, ref(Type)) ].
 
 
