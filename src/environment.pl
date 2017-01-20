@@ -27,7 +27,8 @@ M.add_string(Str) := M.put(strings, SS) :-
     union([Str - _Label - _Length - _Index], M.strings, SS).
 
 M.add_class(Class, Fields, Methods) := M.put(classes/Class, ClassInfo) :-
-    ClassInfo = class{ fields: Fields, methods: Methods }.
+    ClassInfo = class{ fields: Fields, methods: Methods, vtable_label: VTable },
+    atomic_list_concat(['$', Class, '__vtable'], VTable).
 
 M.type_size(class(Class)) := Size :-
     length(M.classes.Class.fields, Len),
