@@ -434,7 +434,8 @@ stmt(Env, for(Type, Var, ArrExp, Do), Dep) -->
 %%%%%%%%%%%%%%%
 %%% CLASSES %%%
 %%%%%%%%%%%%%%%
-class_definition(_Env, class_def(_Name, _Fields, _Methods)) --> [].
+class_definition(Env, class_def(_Name, _Fields, Methods)) -->
+  dcg_map(function_definition(Env), Methods).
 
 class_declaration(Name - Info) -->
     { maplist(snd(-), Info.fields, FieldTypes) },
