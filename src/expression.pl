@@ -1,6 +1,6 @@
 :- module(expression, [types//3, expect_type//3, types//3]).
 :- use_module(utils).
-:- use_module(environment).
+:- use_module(environment/environment).
 :- use_module(leftval).
 
 :- op(600, xfy, ++).

@@ -1,7 +1,7 @@
 :- module(statement, [correct//2, can_shadow//1]).
 
 :- use_module(utils).
-:- use_module(environment).
+:- use_module(environment/environment).
 :- use_module(expression).
 :- use_module(library(dcg/basics)).
 :- use_module(leftval).

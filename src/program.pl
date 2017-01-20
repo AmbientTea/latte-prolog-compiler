@@ -1,6 +1,6 @@
 :- module(program, [correct_program//2]).
 :- use_module(utils).
-:- use_module(environment).
+:- use_module(environment/environment).
 :- use_module(statement).
 
 correct_program(Program, NProgram) -->
