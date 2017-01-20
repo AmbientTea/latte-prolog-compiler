@@ -16,7 +16,7 @@ emptyenv( environment{
         concat      - fun{ return: string, args: [string, string], extern: true },
         readInt     - fun{ return: int, args: [], extern: true },
         readString  - fun{ return: string, args: [], extern: true },
-        calloc      - fun{ return: string, args: [int], extern: true }
+        calloc      - fun{ return: string, args: [int, int], extern: true }
     ],
     strings : []
 }).
