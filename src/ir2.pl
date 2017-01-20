@@ -171,7 +171,10 @@ exp(_Env, var(VarType, Id), Reg, Dep) -->
 
 exp(Env, new(Type), Reg, Dep) -->
     empty_deps(Dep),
-    malloc(Env, class(Type), 1, Reg).
+    malloc(Env, class(Type), 1, Reg),
+    
+    [ VTablePtr = getptr(class(Type), Reg, [0, 0]) ],
+    store(ptr(ref(Env.classes.Type.vtable_type), VTablePtr), glob(Env.classes.Type.vtable_label)).
 
 exp(Env, new_arr(Type, LenExp), StrPtr, Dep) -->
     exp(Env, LenExp, LenV, Dep),
