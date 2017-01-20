@@ -136,8 +136,8 @@ stmt(for(Type, Var, Arr, Do)) -->
 stmt(return(E)) --> [return], exp(E), [;], !.
 stmt(return) --> [return], [;], !.
 
-stmt(incr(Id)) --> [id(Id), '++', ;].
-stmt(decr(Id)) --> [id(Id), '--', ;].
+stmt(incr(var(Id))) --> [id(Id), '++', ;].
+stmt(decr(var(Id))) --> [id(Id), '--', ;].
 
 stmt(block(Stmts)) --> block(Stmts).
 

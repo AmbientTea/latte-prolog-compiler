@@ -35,13 +35,13 @@ correct(return(Exp), return(Type, NExp)) -->
 
 correct(expstmt(Exp), expstmt(NExp)) --> types(Exp, _, NExp).
 
-correct(incr(Id), var(int, Id) = var(int, Id) + int(1)) -->
-    ask_state(get_var(Id), VarInfo),
-    { VarInfo.type = int or_else throw(bad_increment(Id, VarInfo.type)) }.
+correct(incr(Exp), Left = Left + int(1)) -->
+    leftval(Exp, Type, Left),
+    { Type == int or_else throw(bad_increment(Exp, Type)) }.
 
-correct(decr(Id), var(int, Id) = var(int, Id) - int(1)) -->
-    ask_state(get_var(Id), VarInfo),
-    { VarInfo.type = int or_else throw(bad_decrement(Id, VarInfo.type)) }.
+correct(decr(Exp), Left = Left - int(1)) -->
+    leftval(Exp, Type, Left),
+    { Type == int or_else throw(bad_decrement(Exp, Type)) }.
     
 correct(LeftVal = Exp, NLeftVal = NExp) -->
     leftval(LeftVal, LType, NLeftVal),
