@@ -64,3 +64,10 @@ E.merge(A, B) := E.put(returned, Ret).put(strings, SS) :-
 
 :- module_transparent 'pushed'//1.
 pushed(I) --> do_state(push()), I, do_state(pop()).
+
+% METHOD CONTEXT
+M.enter_method(Class, Meth, Ret) :=
+    M.put(returned, false).put(return_type, Ret).put(function_name, Meth)
+     .put(stack,[vars{}]).put(caller_class, Class).
+M.exit_method() :=
+    M.del(returned).del(return_type).del(function_name).del(caller_class).del(stack).del(caller_class).

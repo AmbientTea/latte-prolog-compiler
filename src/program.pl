@@ -59,7 +59,29 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
 %
 
 correct_topdef(class_def(Name, Fields, Methods),
-               class_def(Name, Fields, Methods)) -->
+               class_def(Name, Fields, Methods1)) -->
     { maplist(fst(-), Fields, FieldNames) },
-    { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) }.
+    { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) },
+    dcg_map(correct_method(Name), Methods, Methods1).
+
+
+correct_method(Class, Fun - Return - Args - Body,
+                      fun_def(Return, Fun, Args1, NBody)) -->
+    do_state enter_method(Class, Fun, Return),
+    { Args1 = [('$instance', ref(class(Class))) | Args] },
+    dcg_map(declare_arg, Args1),
+    
+    pushed correct(block(Body), block(NBody1)),
+    
+    get_state(State),
+    { State.returned = false ->
+        ( Return = void ->
+            % void functions need explicit return
+            append(NBody1, [return], NBody)
+        ; throw( no_return(Fun) ) )
+    ; NBody = NBody1 },
+    
+    do_state exit_function().
+                
+
 

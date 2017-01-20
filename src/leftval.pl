@@ -3,10 +3,14 @@
 :- use_module(environment).
 :- use_module(expression).
 
-leftval(var(Id), Type, var(Type, Id)) -->
-    ask_state(get_var(Id), VarInfo) ->
-        { Type = VarInfo.type }
-    ; { throw(not_declared(Id)) }.
+leftval(var(Id), Type, NExp) -->
+    get_state(Env),
+    { Env.get_var(Id) = VarInfo ->
+      Type = VarInfo.type, NExp = var(Type, Id)
+    % we are in a method
+    ; Env.get(caller_class) = Class, member(Id - Type, Env.classes.Class.fields) ->
+      NExp = field(Class, var(ref(class(Class)), '$instance'), Id)
+    ; throw(not_declared(Id)) }.
 
 
 leftval( field(Exp, Field), FieldType, field(Class, NExp, Field) ) -->
