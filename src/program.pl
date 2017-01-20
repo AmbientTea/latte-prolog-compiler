@@ -81,7 +81,7 @@ correct_method(Class, Fun - Return - Args - Body,
         ; throw( no_return(Fun) ) )
     ; NBody = NBody1 },
     
-    do_state exit_function().
+    do_state exit_method().
                 
 
 

@@ -44,7 +44,7 @@ M.enter_function(Fun, Ret) :=
      .put(stack,[vars{}]).
 
 M.exit_function() :=
-    M.del(returned).del(return_type).del(function_name).
+    M.del(returned).del(return_type).del(function_name).del(stack).
 
 M.push() := M.put(stack, [vars{} | M.stack]).
 M.pop() := M.put(stack, Stack) :- M.stack = [_ | Stack].
@@ -70,4 +70,4 @@ M.enter_method(Class, Meth, Ret) :=
     M.put(returned, false).put(return_type, Ret).put(function_name, Meth)
      .put(stack,[vars{}]).put(caller_class, Class).
 M.exit_method() :=
-    M.del(returned).del(return_type).del(function_name).del(caller_class).del(stack).del(caller_class).
+    M.del(returned).del(return_type).del(function_name).del(caller_class).del(stack).
