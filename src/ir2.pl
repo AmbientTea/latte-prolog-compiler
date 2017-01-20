@@ -205,8 +205,8 @@ exp(Env, app(Fun, ArgExps), V, Dep) -->
         Type = Env.functions.Fun.return
     },
     ({ Type = void } ->
-      [ call(Fun, Args) ]
-    ; [ V = call(Type, Fun, Args) ]).
+      [ call(glob(Fun), Args) ]
+    ; [ V = call(Type, glob(Fun), Args) ]).
 
 
 exp(Env, E1 ++ E2, V, Dep) -->
@@ -301,7 +301,7 @@ leftval(Env, arr_index(Type, ArrExp, IndExp), ptr(Type, Ptr), Dep) -->
 % allocate Len objects of type Class
 malloc(Env, Type, Len, Reg) -->
     [ Size = Len * Env.type_size(Type) ],
-    [ Reg1 = call(string, malloc, [(Size, int)]) ],
+    [ Reg1 = call(string, glob(malloc), [(Size, int)]) ],
     [ Reg = cast(Reg1, string, ref(Type)) ].
 
 
@@ -445,7 +445,7 @@ class_declaration(Class - Info) -->
     { maplist(vtable_info, Info.methods, Methods) },
     [ class(Class, FieldTypes, vtable(Info.vtable_label, Info.vtable_type, Methods)) ]
 .
-vtable_info(_Meth - Info, (Info.label, function(Info.return, Info.real_args))).
+vtable_info(_Meth - Info, (glob(Info.label), function(Info.return, Info.real_args))).
 
 %%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%
