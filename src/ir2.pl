@@ -209,6 +209,21 @@ exp(Env, app(Fun, ArgExps), V, Dep) -->
     ; [ V = call(Type, glob(Fun), Args) ]).
 
 
+exp(Env, method(Class, ObjExp, Meth, ArgExps), V, Dep) -->
+    exps(Env, ArgExps, ArgVals, ArgDep),
+    exp(Env, ObjExp, Obj, ObjDep),
+    expression_merge(ObjDep, ArgDep, Dep),
+    
+    { nth0(Pos, Env.classes.Class.methods, Meth - MethInfo) },
+    [ VTablePtr = getptr(class(Class), Obj, [0, 0]) ],
+    load(ptr(ref(Env.classes.Class.vtable_type), VTablePtr), VTable),
+    [ FPtr = getptr(Env.classes.Class.vtable_type, VTable, [0, Pos]) ],
+    load(ptr(function(MethInfo.return, MethInfo.real_args), FPtr), F),
+    ( {MethInfo.return = void } ->
+      [ call(F, [(Obj, ref(class(Class))) | ArgVals]) ]
+    ; [ V = call(MethInfo.return, F, [(Obj, ref(class(Class))) | ArgVals])] ).
+
+
 exp(Env, E1 ++ E2, V, Dep) -->
     exp(Env, app(concat, [E1, E2]), V, Dep).
 
