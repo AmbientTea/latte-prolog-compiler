@@ -20,12 +20,16 @@ declare_top(class_def(Class, Fields, Methods)) -->
     % add variables for real function names
     { maplist(method_type(Class), Methods, MethodTypes) },
     { maplist(method_info(Class), Methods, MethodInfos) },
-    do_state add_class(Class, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos).
+    do_state add_class(Class, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos, MethodTypes).
 
-method_info(Class, Id - Type - Args - _Body,
-            Id - fun{ return: Type, args: ArgTypes, label: Label}) :-
-  maplist(snd, Args, ArgTypes),
-  atomic_list_concat(['$', Class, '_', Id], Label).
+method_info(Class, Id - Type - Args - _Body, Id - MethInfo) :-
+    MethInfo = method{
+        return: Type,
+        args: ArgTypes,
+        real_args: [ref(class(Class)) | ArgTypes],
+        label: Label },
+    maplist(snd, Args, ArgTypes),
+    atomic_list_concat(['$', Class, '_', Id], Label).
 
 method_type(Class, _Id - Type - Args - _Block, function(Type, [ref(class(Class)) | ArgTypes])) :-
     maplist(snd, Args, ArgTypes).

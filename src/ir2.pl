@@ -439,12 +439,10 @@ class_definition(Env, class_def(_Name, _Fields, Methods)) -->
 
 class_declaration(Class - Info) -->
     { maplist(snd(-), Info.fields, FieldTypes) },
-    { maplist(vtable_info(Class), Info.methods, MethodTypes, Methods) },
-    [ class(Class, FieldTypes, vtable(Info.vtable_label, MethodTypes, Methods)) ]
+    { maplist(vtable_info, Info.methods, Methods) },
+    [ class(Class, FieldTypes, vtable(Info.vtable_label, Info.vtable_type, Methods)) ]
 .
-vtable_info(Class, _Meth - Info,
-            function(Info.return, [ref(class(Class)) | Info.args]),
-            (Info.label, function(Info.return, [ref(class(Class)) | Info.args]))).
+vtable_info(_Meth - Info, (Info.label, function(Info.return, Info.real_args))).
 
 %%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%

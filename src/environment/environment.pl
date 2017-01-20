@@ -1,7 +1,7 @@
 :- module(environment, [
     emptyenv/1,
     push/2, pop/2,
-    add_var/4, get_var/3, add_class//3,
+    add_var/4, get_var/3, add_class//4,
     can_shadow//1,
     op(600, fx, pushed), pushed//1
 ]).
@@ -26,8 +26,12 @@ M.add_fun(Fun, Type, ArgTypes) := M.put(functions, [Fun - FunInfo | M.functions]
 M.add_string(Str) := M.put(strings, SS) :-
     union([Str - _Label - _Length - _Index], M.strings, SS).
 
-M.add_class(Class, Fields, Methods) := M.put(classes/Class, ClassInfo) :-
-    ClassInfo = class{ fields: Fields, methods: Methods, vtable_label: VTable },
+M.add_class(Class, Fields, Methods, MethodTypes) := M.put(classes/Class, ClassInfo) :-
+    ClassInfo = class{
+        fields: Fields,
+        methods: Methods,
+        vtable_label: VTable,
+        vtable_type: struct(MethodTypes) },
     atomic_list_concat(['$', Class, '__vtable'], VTable).
 
 M.type_size(class(Class)) := Size :-
