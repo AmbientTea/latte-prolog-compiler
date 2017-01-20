@@ -28,9 +28,8 @@ inst_topdef(_Def, C, C).
 
 inst_arg((V,_), C, C1) :- atomic_concat('%arg', C, V), C1 is C + 1.    
 
-inst_instr(V = _, (C,LC), (C1,LC)) :-
-    V = reg(C), C1 is C + 1.
-inst_instr(block(Bl), (C,LC), (C,LC1)) :-
+inst_instr(reg(C) = _, (C,LC), (C1,LC)) :- C1 is C + 1.
+inst_instr(block(block(Bl)), (C,LC), (C,LC1)) :-
     atomic_concat('label', LC, Bl), LC1 is LC + 1.
 inst_instr(ret(_,_), (X,C), (X1,C)) :- X1 is X+1.
 inst_instr(ret, (X,C), (X1,C)) :- X1 is X+1.
@@ -59,13 +58,14 @@ types(Types) --> separated(", ", type, Types).
 
 value(reg(Reg)) --> "%", atom(Reg).
 value(glob(Glob)) --> "@", atom(Glob).
+value(block(Block)) --> "%", atom(Block).
 value(V) --> atom(V).
 
 % arguments
 argument((Var, Type)) --> type(Type), " ", value(Var).
 args(Args) --> separated(", ", argument, Args).
 
-phi_arg((V, Lab)) --> "[", value(V), ", %", atom(Lab), "]".
+phi_arg((V, Block)) --> "[", value(V), ", ", value(Block), "]".
 
 % strings
 llvm_string([C|T]) -->
@@ -107,8 +107,8 @@ topdef(function(Type, Fun, Args, Body)) -->
 topdef(decl(Fun, Type, Args)) -->
     "declare ", type(Type), " @", atom(Fun), "(", types(Args), ")\n".
 
-topdef(string(Str, Lab, Len, 0)) -->
-    value(Lab), " = private constant [", atom(Len), " x i8] c\"",
+topdef(string(Str, Block, Len, 0)) -->
+    value(Block), " = private constant [", atom(Len), " x i8] c\"",
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
 
 topdef(class(Name, Fields, vtable(Label, VTableType, Methods))) -->
@@ -131,7 +131,7 @@ stmts([H|T]) --> "\n", indent(H), stmt(H), !, stmts(T).
 %%% STATEMENTS %%%
 %%%%%%%%%%%%%%%%%%
 
-stmt(block(B)) --> atom(B), ":".
+stmt(block(block(B))) --> atom(B), ":".
 
 stmt(V = Right ) --> value(V), " = ", rightval(Right).
 
@@ -139,9 +139,9 @@ stmt(call(Fun, Args)) -->
     "call void ", value(Fun), "(", args(Args), ")".
 
 stmt(if(Cond, Lab1, Lab2)) -->
-    "br i1 ", value(Cond), ", label %", atom(Lab1), ", label %", atom(Lab2).
+    "br i1 ", value(Cond), ", label ", value(Lab1), ", label ", value(Lab2).
 
-stmt(jump(Lab)) --> "br label %", atom(Lab).
+stmt(jump(Block)) --> "br label ", value(Block).
 
 stmt(ret) --> "ret void".
 stmt(ret(Type, V)) --> "ret ", type(Type), " ", value(V).
@@ -165,13 +165,13 @@ rightval(call(Type, Fun, Args)) -->
     "call ", type(Type), " ", value(Fun), "(", args(Args), ")".
 
 %%% STRING CONSTANTS %%%
-rightval(strcast(Len, Lab, 0)) -->
-    "bitcast ", type(ref(vector(Len, char))), " ", value(Lab), " to i8*".
+rightval(strcast(Len, Block, 0)) -->
+    "bitcast ", type(ref(vector(Len, char))), " ", value(Block), " to i8*".
 
 % complex constant expression to access a suffix of a string
 %0 = getelementptr i8, i8* bitcast ([8 x i8]* @str0 to i8*), i32 1
-rightval(strcast(Len, Lab, Ind)) -->
-    "getelementptr i8, i8* bitcast (", type(ref(vector(Len, char))), " ", value(Lab), " to i8*), i32 ", atom(Ind).
+rightval(strcast(Len, Block, Ind)) -->
+    "getelementptr i8, i8* bitcast (", type(ref(vector(Len, char))), " ", value(Block), " to i8*), i32 ", atom(Ind).
 
 %%% POINTER HANDLING %%%
 rightval(cast(V, From, To)) -->
