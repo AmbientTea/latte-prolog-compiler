@@ -77,10 +77,12 @@ correct(while(While, Do), while(NWhile,NDo)) -->
     expect_type(While, boolean, NWhile),
     pushed correct(Do, NDo).
 
-correct(for(Type, Var, Arr, Do), for(Type, Var, NArr, NDo)) -->
+correct(for(Type, Var, Arr, Do), for(Type, Var, RArr, NDo)) -->
     types(Arr, ArrType, NArr),
     { ArrType = ref(array(AType)) or_else throw(bad_iteratee(ArrType, Arr)) },
-    { AType = Type or_else throw(bad_iterator(Type, AType)) },
+    
+    ( casts_to(NArr, ArrType, ref(array(Type)), RArr)
+    or_else { throw(bad_iterator(Type, AType)) }),
     pushed ( do_state add_var(Var, Type),
              correct(Do, NDo) ).
 

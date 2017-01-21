@@ -131,6 +131,9 @@ casts_to(Exp, T, T, Exp) --> !.
 casts_to(Exp, ref(class(FromT)), ref(class(ToT)),
     cast(Exp, ref(class(FromT)), ref(class(ToT)))) -->
     is_subclass(FromT, ToT), !.
+casts_to(Exp, ref(array(ref(class(FromT)))), ref(array(ref(class(ToT)))),
+    cast(Exp, ref(array(ref(class(FromT)))), ref(array(ref(class(ToT)))))) -->
+    is_subclass(FromT, ToT).
 
 % types and casts E1 and E2 to the lowest common supertype
 common_cast(E1, E2, T, RE1, RE2) -->
