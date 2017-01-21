@@ -28,8 +28,8 @@ correct(return(_Exp), _NRet) -->
     { throw(void_exp_return) }.
     
 correct(return(Exp), return(Type, NExp)) -->
-    types(Exp, Type, NExp),
-    ( ask_state(return_type, Type) ->
+    ask_state(return_type, Type),
+    ( expect_type(Exp, Type, NExp) ->
         do_state(put(returned, true))
     ; get_state(S), { throw(bad_return(Type, S.return_type, Exp)) }).
 
