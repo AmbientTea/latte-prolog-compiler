@@ -20,9 +20,7 @@ types(cast(Type, null), Type, null) -->
 
 types(cast(Type, Exp), Type, NCast) -->
     types(Exp, ExpType, NExp),
-    ( { ExpType == Type } -> { NCast = NExp }
-    ; { ExpType = ref(class(Sub)), Type = ref(class(Sup)) }, is_subclass(Sub, Sup) ->
-        { NCast = cast(NExp, ExpType, Type) }
+    ( casts_to(NExp, ExpType, Type, NCast)
     ; { throw(bad_cast(Exp, ExpType, Type)) }).
 
 types(field(Exp, length), int, arr_length(Type, NExp)) -->
@@ -120,10 +118,10 @@ expect_types([H|T], [HT|TT], [NH|NT]) --> expect_type(H, HT, NH), expect_types(T
 
 expect_type(Exp, Type, RExp) -->
     types(Exp, ExpType, NExp),
-    ( { Type = ExpType } ->
-        { RExp = NExp }
-    ; { ExpType = ref(class(Sub)), Type = ref(class(Sup)) }, is_subclass(Sub, Sup) ->
-        { RExp = cast(NExp, ExpType, Type) }
-    ; { throw(bad_type(Exp, Type, ExpType)) }).
+    ( casts_to(NExp, ExpType, Type, RExp)
+    ; { throw(bad_type(Exp, Type, ExpType)) }), !.
 
-
+casts_to(Exp, T, T, Exp) --> !.
+casts_to(Exp, ref(class(FromT)), ref(class(ToT)),
+    cast(Exp, ref(class(FromT)), ref(class(ToT)))) -->
+    is_subclass(FromT, ToT), !.
