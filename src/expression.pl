@@ -77,10 +77,16 @@ types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_ty
 
 %%% FUNCTIONS %%%
 
-types(app(Fun, Args), Type, app(Fun, NArgs)) -->
-    ask_state(functions, FunsInfo),
-    { member(Fun - FunInfo, FunsInfo) or_else throw(no_function(Fun)) },
+types(app(Fun, Args), Type, NExp) -->
+    get_state(Env),
+    { Class = Env.get(caller_class), member(Fun - FunInfo, Env.classes.Class.methods) ->
+        NExp = method(Class, var(ref(class(Class)), '$instance'), Fun, NArgs)
+    ; member(Fun - FunInfo, Env.functions) ->
+        NExp = app(Fun, NArgs)
+    ; throw(no_function(Fun)) },
+    
     all_type(Args, ArgTypes, NArgs),
+    
     { Type = FunInfo.return },
     { ArgTypes = FunInfo.args or_else throw(bad_args(Fun, FunInfo.args, ArgTypes)) }.
 
