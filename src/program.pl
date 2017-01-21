@@ -19,9 +19,7 @@ declare_top(class_def(Class, Super, Fields, Methods)) -->
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     { (Super == '$none' ; Env.classes ? get(Super)) or_else throw(bad_superclass(Super, Class)) },
     % add variables for real function names
-    { maplist(method_type(Class), Methods, MethodTypes),
-      maplist(method_info(Class), Methods, MethodInfos),
-      ClassInfo1 = class{
+    { ClassInfo1 = class{
           fields: [('$vtable' - ref(class(VTLabel))) | Fields],
           methods: MethodInfos,
           vtable_label: VTable,
@@ -29,11 +27,19 @@ declare_top(class_def(Class, Super, Fields, Methods)) -->
           vtable_type_label: class(VTLabel) },
       atomic_list_concat(['_', Class, '_vtable'], VTable),
       atomic_list_concat(['_', Class, '_vtable_T'], VTLabel),
-      (Super == '$none' ->
-          ClassInfo = ClassInfo1
+
+      % own method declarations
+      maplist(method_info(Class), Methods, MethodInfos1),
+      
+      ( Super == '$none' ->
+          ClassInfo = ClassInfo1,
+          MethodInfos = MethodInfos1
       ;
-          _SupInfo = Env.classes.Super,
-          ClassInfo = ClassInfo1.put(superclass, Super) )
+          SupInfo = Env.classes.Super,
+          ClassInfo = ClassInfo1.put(superclass, Super),
+          inherit__methods(SupInfo.methods, MethodInfos1, MethodInfos) ),
+      maplist(method_type, MethodInfos, MethodTypes)
+      
     },
 
     do_state put(classes/Class, ClassInfo).
@@ -47,8 +53,14 @@ method_info(Class, Id - Type - Args - _Body, Id - MethInfo) :-
     maplist(snd, Args, ArgTypes),
     atomic_list_concat(['_', Class, '__', Id], Label).
 
-method_type(Class, _Id - Type - Args - _Block, function(Type, [ref(class(Class)) | ArgTypes])) :-
-    maplist(snd, Args, ArgTypes).
+method_type(_Meth - MethInfo, function(MethInfo.return, MethInfo.real_args)).
+
+% merges superclass and subclass method lists, substituting overrides
+% and preserving order
+inherit__methods([], Infos, Infos).
+inherit__methods([Meth - SInfo | STail], Infos, [Meth - Info | Tail]) :-
+    ( select(Meth - Info, Infos, NInfos) or_else Info = SInfo, NInfos = Infos),
+    inherit__methods(STail, NInfos, Tail).
 %
 % FUNCTION DEFINITIONS
 %
