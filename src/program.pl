@@ -17,6 +17,7 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
 declare_top(class_def(Class, Super, Fields, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
+    { (Super == '$none' ; Env.classes ? get(Super)) or_else throw(bad_superclass(Super, Class)) },
     % add variables for real function names
     { maplist(method_type(Class), Methods, MethodTypes),
       maplist(method_info(Class), Methods, MethodInfos),
@@ -30,7 +31,10 @@ declare_top(class_def(Class, Super, Fields, Methods)) -->
       atomic_list_concat(['_', Class, '_vtable_T'], VTLabel),
       (Super == '$none' ->
           ClassInfo = ClassInfo1
-      ; ClassInfo = ClassInfo1.put(superclass, Super) )},
+      ;
+          _SupInfo = Env.classes.Super,
+          ClassInfo = ClassInfo1.put(superclass, Super) )
+    },
 
     do_state put(classes/Class, ClassInfo).
 

@@ -97,3 +97,5 @@ exception_message(dupl_arg(Arg)) -->
 % class
 exception_message(dupl_field(Field)) -->
     "duplicate field ", atom(Field).
+exception_message(bad_superclass(Super, Class)) -->
+    "class ", atom(Class), " extends non-existent class ", atom(Super).
