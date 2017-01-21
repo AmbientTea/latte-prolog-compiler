@@ -174,7 +174,7 @@ exp(Env, new(Type), Reg, Dep) -->
     malloc(Env, class(Type), 1, Reg),
     
     [ VTablePtr = getptr(class(Type), Reg, [0, 0]) ],
-    store(ptr(ref(Env.classes.Type.vtable_type), VTablePtr), glob(Env.classes.Type.vtable_label)).
+    store(ptr(ref(Env.classes.Type.vtable_type_label), VTablePtr), glob(Env.classes.Type.vtable_label)).
 
 exp(Env, new_arr(Type, LenExp), StrPtr, Dep) -->
     exp(Env, LenExp, LenV, Dep),
@@ -220,8 +220,8 @@ exp(Env, method(Class, ObjExp, Meth, ArgExps), V, Dep) -->
     
     % obj -> vtable -> method
     [ VTablePtr = getptr(class(Class), Obj, [0, 0]) ],
-    load(ptr(ref(ClassInfo.vtable_type), VTablePtr), VTable),
-    [ FPtr = getptr(ClassInfo.vtable_type, VTable, [0, Pos]) ],
+    load(ptr(ref(ClassInfo.vtable_type_label), VTablePtr), VTable),
+    [ FPtr = getptr(ClassInfo.vtable_type_label, VTable, [0, Pos]) ],
     load(ptr(MethInfo.type(), FPtr), F),
     
     % type arguments
@@ -465,7 +465,7 @@ class_definition(Env, class_def(_Name, _Fields, Methods)) -->
 class_declaration(Class - Info) -->
     { maplist(snd(-), Info.fields, FieldTypes) },
     { maplist(vtable_info, Info.methods, Methods) },
-    [ class(Class, FieldTypes, vtable(Info.vtable_label, Info.vtable_type, Methods)) ]
+    [ class(Class, Info, FieldTypes, Methods) ]
 .
 vtable_info(_Meth - Info, (glob(Info.label), function(Info.return, Info.real_args))).
 

@@ -111,14 +111,15 @@ topdef(string(Str, Block, Len, 0)) -->
     value(Block), " = private constant [", atom(Len), " x i8] c\"",
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
 
-topdef(class(Name, Fields, vtable(Label, VTableType, Methods))) -->
-    "%", atom(Name), " = type {", separated(", ", type, Fields), "}\n",
-    "@", atom(Label), " = constant ", type(VTableType), "{", args(Methods), "}\n". 
+topdef(class(Class, Info, Fields, Methods)) -->
+    type(Info.vtable_type_label), " = type ", type(Info.vtable_type), "\n",
+    "%", atom(Class), " = type ", type(struct(Fields)), "\n",
+    "@", atom(Info.vtable_label), " = constant ", type(Info.vtable_type_label), "{", args(Methods), "}\n". 
 
 % suffix substring
 topdef(string(_Str, _Lab, _Len, _Ind)) --> [].
 
-topdef(Top) --> "*unrecognized*: ", atom(Top).
+topdef(Top) --> "*unrecognized*: ", atom(Top), "\n".
 
 
 indent(block(_)) --> "".

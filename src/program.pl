@@ -21,7 +21,7 @@ declare_top(class_def(Class, Fields, Methods)) -->
     { maplist(method_type(Class), Methods, MethodTypes),
       maplist(method_info(Class), Methods, MethodInfos),
       ClassInfo = class{
-          fields: [('$vtable' - ref(struct(MethodTypes))) | Fields],
+          fields: [('$vtable' - ref(class(VTLabel))) | Fields],
           methods: MethodInfos,
           vtable_label: VTable,
           vtable_type: struct(MethodTypes),
