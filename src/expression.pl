@@ -115,6 +115,9 @@ types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, NArgs)) -->
 all_type([], [], []) --> [].
 all_type([H|T], [HT|TT], [NH|NT]) --> types(H, HT, NH), all_type(T, TT, NT).
 
+expect_types([], [], []) --> [].
+expect_types([H|T], [HT|TT], [NH|NT]) --> expect_type(H, HT, NH), expect_types(T, TT, NT).
+
 expect_type(Exp, Type, RExp) -->
     types(Exp, ExpType, NExp),
     ( { Type = ExpType } ->
