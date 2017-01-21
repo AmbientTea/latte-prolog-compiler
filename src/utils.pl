@@ -117,7 +117,7 @@ separated_cont(_Sep, _Clause, []) --> [].
 
 % dcg_map(+Closure, ?List)
 % succeeds if Closure succeeds for each element in List
-:- module_transparent dcg_map//2, dcg_map//3.
+:- module_transparent dcg_map//2, dcg_map//3, dcg_map//4, dcg_map//5.
 dcg_map(_, []) --> [].
 dcg_map(Clause, [H|T]) -->
     call(Clause, H), dcg_map(Clause, T).
