@@ -82,6 +82,9 @@ exception_message(bad_iteratee(Type, Exp)) -->
     "iteration over expression ", atom(Exp), " of non-array type ", atom(Type).
 exception_message(bad_iterator(Type, ArrType)) -->
     "iterator of type ", atom(Type), " used on array of type ", atom(ArrType).
+exception_message(bad_compare(E1, T1, E2, T2)) -->
+    "cannot compare expressions ", atom(E1), " of type ", atom(T1), " and ",
+    atom(E2), " of type ", atom(T2).
 % program
 exception_message(dupl_fun(Fun)) -->
     "illegal redefinition of function ", atom(Fun).

@@ -1,4 +1,4 @@
-:- module(expression, [types//3, expect_type//3, types//3]).
+:- module(expression, [types//3, expect_type//3, types//3, casts_to//4]).
 :- use_module(utils).
 :- use_module(environment/environment).
 :- use_module(leftval).
@@ -75,8 +75,10 @@ types(E, boolean, NE) -->
 
 types(not(E), boolean, not(NE)) --> expect_type(E, boolean, NE).
 
-types(E1 == E2, boolean, '=='(T, NE1, NE2)) --> types(E1, T, NE1), expect_type(E2, T, NE2).
-types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_type(E2, T, NE2).
+types(E1 == E2, boolean, '=='(T, RE1, RE2)) -->
+    common_cast(E1, E2, T, RE1, RE2).
+types('!='(E1, E2), boolean, '!='(T, RE1, RE2)) --> 
+    common_cast(E1, E2, T, RE1, RE2).
 
 %%% FUNCTIONS %%%
 
@@ -129,3 +131,13 @@ casts_to(Exp, T, T, Exp) --> !.
 casts_to(Exp, ref(class(FromT)), ref(class(ToT)),
     cast(Exp, ref(class(FromT)), ref(class(ToT)))) -->
     is_subclass(FromT, ToT), !.
+
+% types and casts E1 and E2 to the lowest common supertype
+common_cast(E1, E2, T, RE1, RE2) -->
+    types(E1, T1, NE1),
+    types(E2, T2, NE2),
+    ( casts_to(NE1, T1, T2, RE1) ->
+        { RE2 = NE2, T = T2 }
+    ; casts_to(NE2, T2, T1, RE2) ->
+        { RE1 = NE1, T = T1 }
+    ; { throw(bad_compare(E1, T1, E2, T2)) } ).
