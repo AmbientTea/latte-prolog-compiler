@@ -3,15 +3,15 @@
     op(600, xfy, ?),
     op(500, yfx, ~),
     op(700, xfx, set_is), set_is/2,
-    op(1100, xfy, or_else), or_else/2,
-    op(1100, xfy, then), then/2,
+    op(1100, xfy, or_else), or_else/2, or_else//2,
+    op(1100, xfy, then), then/2, then//2,
     fst/2, snd/2,
     fst/3, snd/3,
     foldr/4,
     duplicate_in/2,
     no_duplicates/1,
     zip/3,
-    dcg_map//2, dcg_map//3,
+    dcg_map//2, dcg_map//3, dcg_map//4, dcg_map//5,
     separated//3,
     dcg_foldl//3, dcg_foldl//4, dcg_foldl//5, '?'/2,
     get_state//1, put_state//1,
@@ -41,9 +41,11 @@ snd(Op, X, B) :- X =.. [Op, _A, B].
 if_possible Clause :- Clause, !.
 if_possible _Clause.
 
-:- module_transparent or_else/2, then/2.
+:- module_transparent or_else/2, then/2, or_else//2, then//2.
 A or_else B :- A -> true ; B.
+A or_else B --> A -> { true } ; B.
 A then B :- A -> B ; true.
+A then B --> A -> B ; { true }.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % DGC State Handling %
@@ -125,6 +127,18 @@ dcg_map(Clause, [H|T]) -->
 dcg_map(_, [], []) --> [].
 dcg_map(Clause, [H|T], [HH|TT]) -->
     call(Clause, H, HH), dcg_map(Clause, T, TT).
+
+% dcg_map(+Closure, ?List1, ?List2, List3?)
+% succeeds if Closure succeeds for each pair of coresponding elements in List1, List2, List3
+dcg_map(_, [], [], []) --> [].
+dcg_map(Clause, [H|T], [HH|TT], [HHH|TTT]) -->
+    call(Clause, H, HH, HHH), dcg_map(Clause, T, TT, TTT).
+
+% dcg_map(+Closure, ?List1, ?List2, List3?)
+% succeeds if Closure succeeds for each pair of coresponding elements in List1, List2, List3
+dcg_map(_, [], [], [], []) --> [].
+dcg_map(Clause, [H|T], [HH|TT], [HHH|TTT], [HHHH|TTTT]) -->
+    call(Clause, H, HH, HHH, HHHH), dcg_map(Clause, T, TT, TTT, TTTT).
 
 % dcg_folfl(+Clause, +LeftValue, ?RightValue)
 % DGC analogon of functional fold left
