@@ -14,7 +14,7 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
-declare_top(class_def(Class, Super, Fields, Methods)) -->
+declare_top(class_def(Class, Super, Fields1, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     { (Super == '$none' ; Env.classes ? get(Super)) or_else throw(bad_superclass(Super, Class)) },
@@ -33,11 +33,14 @@ declare_top(class_def(Class, Super, Fields, Methods)) -->
       
       ( Super == '$none' ->
           ClassInfo = ClassInfo1,
-          MethodInfos = MethodInfos1
+          MethodInfos = MethodInfos1,
+          Fields = Fields1
       ;
           SupInfo = Env.classes.Super,
           ClassInfo = ClassInfo1.put(superclass, Super),
-          inherit__methods(SupInfo.methods, MethodInfos1, MethodInfos) ),
+          inherit__methods(SupInfo.methods, MethodInfos1, MethodInfos),
+          SupInfo.fields = [ _ | SupFields ],
+          append(SupFields, Fields1, Fields)),
       maplist(method_type, MethodInfos, MethodTypes)
       
     },
