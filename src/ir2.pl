@@ -223,8 +223,13 @@ exp(Env, method(Class, ObjExp, Meth, ArgExps), V, Dep) -->
     [ FPtr = getptr(ClassInfo.vtable_type_label, VTable, [0, Pos]) ],
     load(ptr(MethInfo.type(), FPtr), F),
     
+    ( { MethInfo.defining_class == Class } ->
+        { RObj = Obj}
+    % inheriting callers need cast
+    ; [ RObj = cast(Obj, ref(class(Class)), ref(class(MethInfo.defining_class)))] ),
+    
     % type arguments
-    { zip([Obj | ArgVals], MethInfo.real_args, RealArgs ) },
+    { zip([RObj | ArgVals], MethInfo.real_args, RealArgs ) },
     
     ( { MethInfo.return = void } ->
       [ call(F, RealArgs) ]

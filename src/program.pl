@@ -49,6 +49,7 @@ declare_top(class_def(Class, Super, Fields1, Methods)) -->
 
 method_info(Class, Id - Type - Args - _Body, Id - MethInfo) :-
     MethInfo = method{
+        defining_class: Class,
         return: Type,
         args: ArgTypes,
         real_args: [ref(class(Class)) | ArgTypes],
