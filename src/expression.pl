@@ -29,6 +29,10 @@ types(field(Exp, length), int, arr_length(Type, NExp)) -->
     types(Exp, ref(array(Type)), NExp), !.
 
 %%% VARIABLES %%%
+types(var(self), ref(class(Class)), var(ref(class(Class)), '$instance')) -->
+    get_state(Env),
+    { Class = Env.get(caller_class) }.
+
 types( LeftVal, Type, NLeftVal ) -->
     leftval(LeftVal, Type, NLeftVal).
 
