@@ -83,17 +83,19 @@ types('!='(E1, E2), boolean, '!='(T, NE1, NE2)) --> types(E1, T, NE1), expect_ty
 types(app(Fun, Args), Type, NExp) -->
     get_state(Env),
     { Class = Env.get(caller_class), member(Fun - FunInfo, Env.classes.Class.methods) ->
-        NExp = method(Class, var(ref(class(Class)), '$instance'), Fun, NArgs)
+        NExp = method(Class, var(ref(class(Class)), '$instance'), Fun, RArgs)
     ; member(Fun - FunInfo, Env.functions) ->
-        NExp = app(Fun, NArgs)
+        NExp = app(Fun, RArgs)
     ; throw(no_function(Fun)) },
     
     all_type(Args, ArgTypes, NArgs),
     
     { Type = FunInfo.return },
-    { ArgTypes = FunInfo.args or_else throw(bad_args(Fun, FunInfo.args, ArgTypes)) }.
+    
+    ( dcg_map(casts_to, NArgs, ArgTypes, FunInfo.args, RArgs)
+    ; { throw(bad_args(Fun, FunInfo.args, ArgTypes)) } ).
 
-types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, NArgs)) -->
+types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, RArgs)) -->
     get_state(Env),
     types(Exp, EType, NExp),
     
@@ -103,8 +105,10 @@ types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, NArgs)) -->
     
     all_type(Args, ArgTypes, NArgs),
     
-    { ArgTypes = MethInfo.args or_else throw(bad_args(Class:Meth, MethInfo.args, ArgTypes)) },
-    { Type = MethInfo.return }.
+    { Type = MethInfo.return },
+    
+    ( dcg_map(casts_to, NArgs, ArgTypes, MethInfo.args, RArgs)
+    ; { throw(bad_args(Class:Meth, MethInfo.args, ArgTypes)) } ).
 
 %%%%%%%%%%%%%%%
 %%% HELPERS %%%
