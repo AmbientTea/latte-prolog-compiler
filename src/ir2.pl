@@ -155,8 +155,7 @@ exp(_Env, false, 0, Dep) -->
 exp(_Env, true, 1, Dep) -->
     empty_deps(Dep).
 
-exp(Env, cast(From, To, Exp), Reg, Dep) -->
-    { format(user_error, "~w~n", [From - To - Exp]) },
+exp(Env, cast(Exp, From, To), Reg, Dep) -->
     exp(Env, Exp, ExpReg, Dep),
     [ Reg = cast(ExpReg, From, To) ].
     

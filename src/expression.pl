@@ -20,9 +20,10 @@ types(cast(Type, null), Type, null) -->
 
 types(cast(Type, Exp), Type, NCast) -->
     types(Exp, ExpType, NExp),
-    { ExpType == Type -> NCast = NExp
-    % NCast = cast(Type, ExpType, NExp)
-    ; throw(bad_cast(Exp, ExpType, Type)) }.
+    ( { ExpType == Type } -> { NCast = NExp }
+    ; { ExpType = ref(class(Sub)), Type = ref(class(Sup)) }, is_subclass(Sub, Sup) ->
+        { NCast = cast(NExp, ExpType, Type) }
+    ; { throw(bad_cast(Exp, ExpType, Type)) }).
 
 types(field(Exp, length), int, arr_length(Type, NExp)) -->
     types(Exp, ref(array(Type)), NExp), !.
@@ -114,3 +115,4 @@ expect_type(Exp, Type, NExp) -->
     types(Exp, ExpType, NExp),
     { Type = ExpType or_else throw(bad_type(Exp, Type, ExpType)) }.
 
+    
