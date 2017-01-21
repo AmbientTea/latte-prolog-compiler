@@ -41,8 +41,8 @@ _M.type_size(array(_)) := 8.
 
 is_subclass(Sub, Sup) -->
     get_state(Env),
-    { Super = Env.classes.get(Sub).get(superclass),
-      (Super == Sup ; is_subclass(Super, Sup)) }.
+    { Super = Env.classes.get(Sub).get(superclass) },
+    ( { Super == Sup } ; is_subclass(Super, Sup) ).
 
 % FUNCTION CONTEXT
 M.enter_function(Fun, Ret) :=
