@@ -459,7 +459,7 @@ stmt(Env, for(Type, Var, ArrExp, Do), Dep) -->
 %%%%%%%%%%%%%%%
 %%% CLASSES %%%
 %%%%%%%%%%%%%%%
-class_definition(Env, class_def(_Name, _Fields, Methods)) -->
+class_definition(Env, class_def(_Name, _Super, _Fields, Methods)) -->
   dcg_map(function_definition(Env), Methods).
 
 class_declaration(Class - Info) -->

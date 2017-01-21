@@ -25,7 +25,7 @@ parse(_File, _Tree) :- throw(parsing_fail).
 %%% LEXER %%%
 %%%%%%%%%%%%%	
 
-keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new, null, for]).
+keywords([ if, else, while, return, true, false, int, string, boolean, void, class, new, null, for, extends]).
 operators(["++", "--", "+", "-", "*", "/", "%", "(", ")", "{", "}", ";", "==", "!=",
             "=", "<=", "<", ">=", ">", "||", "&&", "!", ",", ".", "[", "]", ":"]).
 
@@ -102,8 +102,8 @@ fun_def(fun_def(Type, Id, Args, Block)) -->
 % function argument
 farg((Id, Type)) --> type(Type), !, [id(Id)].
 
-class_def(class_def(Name, Fields, Methods)) -->
-    [ class, id(Name), '{'],
+class_def(class_def(Class, Sup, Fields, Methods)) -->
+    [ class, id(Class) ], ([extends, id(Sup)], ! ; {Sup = '$none'} ),  ['{'],
         dcg_foldl(class_subdef, ([],[]), (Fields, Methods)),
     ['}'].
 

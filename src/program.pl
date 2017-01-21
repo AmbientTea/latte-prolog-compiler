@@ -14,7 +14,7 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
-declare_top(class_def(Class, Fields, Methods)) -->
+declare_top(class_def(Class, _Super, Fields, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     % add variables for real function names
@@ -71,8 +71,8 @@ correct_topdef(fun_def(Return, Fun, Args, Body),
 % CLASS DEFINITIONS
 %
 
-correct_topdef(class_def(Class, Fields, Methods),
-               class_def(Class, Fields, Methods1)) -->
+correct_topdef(class_def(Class, Super, Fields, Methods),
+               class_def(Class, Super, Fields, Methods1)) -->
     { maplist(fst(-), Fields, FieldNames) },
     { duplicate_in(Field, FieldNames) then throw(dupl_field(Field)) },
     dcg_map(correct_method(Class), Methods, Methods1).
@@ -97,6 +97,5 @@ correct_method(Class, Fun - Return - Args - Body,
     { member(Fun - FunInfo, State.classes.Class.methods), NFun = FunInfo.label },
     
     do_state exit_method().
-                
 
 
