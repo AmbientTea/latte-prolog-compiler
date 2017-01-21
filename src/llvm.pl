@@ -112,9 +112,10 @@ topdef(string(Str, Block, Len, 0)) -->
     { atom_codes(Str, Codes) }, llvm_string(Codes), "\", align 1\n".
 
 topdef(class(Class, Info, Fields, Methods)) -->
+    "; class ", atom(Class), "\n",
     type(Info.vtable_type_label), " = type ", type(Info.vtable_type), "\n",
     "%", atom(Class), " = type ", type(struct(Fields)), "\n",
-    "@", atom(Info.vtable_label), " = constant ", type(Info.vtable_type_label), "{", args(Methods), "}\n". 
+    "@", atom(Info.vtable_label), " = constant ", type(Info.vtable_type_label), "{", args(Methods), "}\n\n". 
 
 % suffix substring
 topdef(string(_Str, _Lab, _Len, _Ind)) --> [].
