@@ -111,8 +111,12 @@ types(method(Exp, Meth, Args), Type, method(Class, NExp, Meth, NArgs)) -->
 all_type([], [], []) --> [].
 all_type([H|T], [HT|TT], [NH|NT]) --> types(H, HT, NH), all_type(T, TT, NT).
 
-expect_type(Exp, Type, NExp) -->
+expect_type(Exp, Type, RExp) -->
     types(Exp, ExpType, NExp),
-    { Type = ExpType or_else throw(bad_type(Exp, Type, ExpType)) }.
+    ( { Type = ExpType } ->
+        { RExp = NExp }
+    ; { ExpType = ref(class(Sub)), Type = ref(class(Sup)) }, is_subclass(Sub, Sup) ->
+        { RExp = cast(NExp, ExpType, Type) }
+    ; { throw(bad_type(Exp, Type, ExpType)) }).
 
-    
+
