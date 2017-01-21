@@ -18,9 +18,18 @@ declare_top(class_def(Class, Fields, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     % add variables for real function names
-    { maplist(method_type(Class), Methods, MethodTypes) },
-    { maplist(method_info(Class), Methods, MethodInfos) },
-    do_state add_class(Class, [('$vtable' - ref(struct(MethodTypes))) | Fields], MethodInfos, MethodTypes).
+    { maplist(method_type(Class), Methods, MethodTypes),
+      maplist(method_info(Class), Methods, MethodInfos),
+      ClassInfo = class{
+          fields: [('$vtable' - ref(struct(MethodTypes))) | Fields],
+          methods: MethodInfos,
+          vtable_label: VTable,
+          vtable_type: struct(MethodTypes),
+          vtable_type_label: class(VTLabel) },
+      atomic_list_concat(['$', Class, '__vtable'], VTable),
+      atomic_list_concat(['$', Class, '__vtableT'], VTLabel) },
+
+    do_state put(classes/Class, ClassInfo).
 
 method_info(Class, Id - Type - Args - _Body, Id - MethInfo) :-
     MethInfo = method{
