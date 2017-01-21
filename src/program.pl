@@ -26,8 +26,8 @@ declare_top(class_def(Class, Fields, Methods)) -->
           vtable_label: VTable,
           vtable_type: struct(MethodTypes),
           vtable_type_label: class(VTLabel) },
-      atomic_list_concat(['$', Class, '__vtable'], VTable),
-      atomic_list_concat(['$', Class, '__vtableT'], VTLabel) },
+      atomic_list_concat(['_', Class, '_vtable'], VTable),
+      atomic_list_concat(['_', Class, '_vtable_T'], VTLabel) },
 
     do_state put(classes/Class, ClassInfo).
 
@@ -38,7 +38,7 @@ method_info(Class, Id - Type - Args - _Body, Id - MethInfo) :-
         real_args: [ref(class(Class)) | ArgTypes],
         label: Label },
     maplist(snd, Args, ArgTypes),
-    atomic_list_concat(['$', Class, '_', Id], Label).
+    atomic_list_concat(['_', Class, '__', Id], Label).
 
 method_type(Class, _Id - Type - Args - _Block, function(Type, [ref(class(Class)) | ArgTypes])) :-
     maplist(snd, Args, ArgTypes).
