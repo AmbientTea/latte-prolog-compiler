@@ -3,7 +3,8 @@
     push/2, pop/2,
     add_var/4, get_var/3,
     can_shadow//1,
-    op(600, fx, pushed), pushed//1
+    op(600, fx, pushed), pushed//1,
+    is_subclass//2
 ]).
 
 :- use_module(method).
@@ -36,6 +37,12 @@ _M.type_size(boolean) := 4.
 _M.type_size(string) := 4.
 _M.type_size(ref(_)) := 4.
 _M.type_size(array(_)) := 8.
+
+
+is_subclass(Sub, Sup) -->
+    get_state(Env),
+    { Super = Env.classes.get(Sub).get(superclass),
+      (Super == Sup ; is_subclass(Super, Sup)) }.
 
 % FUNCTION CONTEXT
 M.enter_function(Fun, Ret) :=

@@ -14,20 +14,23 @@ declare_top(fun_def(Return, Fun, Args, _)) -->
     { maplist(snd, Args, ArgTypes) },
     put_state( Env.add_fun(Fun, Return, ArgTypes) ).
 
-declare_top(class_def(Class, _Super, Fields, Methods)) -->
+declare_top(class_def(Class, Super, Fields, Methods)) -->
     get_state(Env),
     { \+ (Env.classes ? get(Class)) or_else throw(dupl_class(Class)) },
     % add variables for real function names
     { maplist(method_type(Class), Methods, MethodTypes),
       maplist(method_info(Class), Methods, MethodInfos),
-      ClassInfo = class{
+      ClassInfo1 = class{
           fields: [('$vtable' - ref(class(VTLabel))) | Fields],
           methods: MethodInfos,
           vtable_label: VTable,
           vtable_type: struct(MethodTypes),
           vtable_type_label: class(VTLabel) },
       atomic_list_concat(['_', Class, '_vtable'], VTable),
-      atomic_list_concat(['_', Class, '_vtable_T'], VTLabel) },
+      atomic_list_concat(['_', Class, '_vtable_T'], VTLabel),
+      (Super == '$none' ->
+          ClassInfo = ClassInfo1
+      ; ClassInfo = ClassInfo1.put(superclass, Super) )},
 
     do_state put(classes/Class, ClassInfo).
 
